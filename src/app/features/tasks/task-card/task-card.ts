@@ -15,10 +15,15 @@ import { isTaskOverdue } from '../../../core/models/overdue';
 import { Task, TaskPriority } from '../../../core/models/task.model';
 import { dueDateLabel } from '../due-date-label';
 
+/**
+ * `-text` variants (not the plain `--color-priority-*` used for chart fills
+ * and breakdown-list dots) — see styles.css: the raw hues fail WCAG AA as
+ * small badge text against their own chip backgrounds.
+ */
 const PRIORITY_CLASS: Record<TaskPriority, string> = {
-  high: 'text-priority-high bg-priority-high-bg',
-  medium: 'text-priority-medium bg-priority-medium-bg',
-  low: 'text-priority-low bg-priority-low-bg',
+  high: 'text-priority-high-text bg-priority-high-bg',
+  medium: 'text-priority-medium-text bg-priority-medium-bg',
+  low: 'text-priority-low-text bg-priority-low-bg',
 };
 
 export interface TaskActionEvent {

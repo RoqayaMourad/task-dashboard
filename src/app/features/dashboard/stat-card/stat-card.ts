@@ -1,8 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { ChangeType, Statistic } from '../../../core/models/statistic.model';
 
+/**
+ * `positive` uses the `-text` variant, not plain `--color-change-positive`
+ * — see styles.css: the raw hue fails WCAG AA at this text-xs size on white.
+ * `negative`/`neutral` already pass and are untouched.
+ */
 const CHANGE_TYPE_CLASS: Record<ChangeType, string> = {
-  positive: 'text-change-positive',
+  positive: 'text-change-positive-text',
   negative: 'text-change-negative',
   neutral: 'text-change-neutral',
 };

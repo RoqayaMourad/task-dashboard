@@ -41,6 +41,18 @@
   --color-priority-medium-bg: #fff3e0;
   --color-priority-low-bg: #ffebee;
 
+  /*
+   * Accessible-text variants (Phase 18). The Figma-matched hues above are
+   * kept as-is everywhere else (chart fills, breakdown-list dots) — these
+   * exist only because the small bold badge/trend TEXT set in those hues
+   * fails WCAG AA against their own light chip backgrounds (2.49:1-4.36:1
+   * measured). Same hue family, darkened until each passes 4.5:1+ against
+   * its actual background; never used for anything but small text.
+   */
+  --color-priority-high-text: #c62828; /* vs --color-priority-high-bg: 4.91:1 */
+  --color-priority-medium-text: #995000; /* vs --color-priority-medium-bg: 5.47:1 */
+  --color-priority-low-text: #1b5e20; /* vs --color-priority-low-bg: 6.88:1 */
+
   /* Due-date state — independent of priority/status, overrides hover ring */
   --color-overdue: #d32f2f;
   --color-overdue-bg: #ffebee;
@@ -55,6 +67,9 @@
   --color-change-positive: #388e3c;
   --color-change-negative: #d32f2f;
   --color-change-neutral: #757575;
+  /* Accessible-text variant (Phase 18): --color-change-positive's 4.12:1 on white fails
+     WCAG AA at StatCard's text-xs size; negative/neutral above already pass and are untouched. */
+  --color-change-positive-text: #1b5e20; /* vs white: 7.87:1 */
 
   /*
    * Neutral text/border roles. Figma's neutral scale is true grey, not
@@ -79,5 +94,22 @@
 
   :focus-visible {
     @apply ring-2 ring-primary ring-offset-2 outline-none;
+  }
+
+  /* Colors only (never `transition: all`) — layout/visibility changes stay immediate. */
+  a,
+  button {
+    @apply transition-colors duration-150;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }

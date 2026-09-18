@@ -43,7 +43,7 @@ describe('StatCard', () => {
   });
 
   it.each([
-    ['positive', 'text-change-positive'],
+    ['positive', 'text-change-positive-text'],
     ['negative', 'text-change-negative'],
     ['neutral', 'text-change-neutral'],
   ] as const)('applies "%s" -> %s change coloring', (changeType, expectedClass) => {

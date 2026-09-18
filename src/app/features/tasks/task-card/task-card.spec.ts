@@ -88,9 +88,9 @@ describe('TaskCard', () => {
   });
 
   it.each([
-    ['high', 'text-priority-high'],
-    ['medium', 'text-priority-medium'],
-    ['low', 'text-priority-low'],
+    ['high', 'text-priority-high-text'],
+    ['medium', 'text-priority-medium-text'],
+    ['low', 'text-priority-low-text'],
   ] as const)('applies the "%s" priority class', (priority, expectedClass) => {
     const fixture = createComponent(fixtureTask({ priority }));
     const chip: HTMLElement = fixture.nativeElement.querySelector(`.${expectedClass}`);
