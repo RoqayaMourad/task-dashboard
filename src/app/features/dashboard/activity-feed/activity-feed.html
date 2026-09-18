@@ -1,0 +1,17 @@
+@if (items().length > 0) {
+  <ul class="divide-y divide-border">
+    @for (item of items(); track item.taskId) {
+      <li class="py-3">
+        <p class="text-sm text-text-heading">
+          {{ item.taskTitle }}
+          <span class="text-text-muted">{{
+            item.kind === 'created' ? 'was created' : 'was updated'
+          }}</span>
+        </p>
+        <p class="mt-0.5 text-xs text-text-muted">{{ item.at | date: 'medium' }}</p>
+      </li>
+    }
+  </ul>
+} @else {
+  <p class="text-sm text-text-muted">No recent activity</p>
+}

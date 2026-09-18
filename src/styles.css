@@ -36,6 +36,17 @@
   --color-overdue: #d32f2f;
 
   /*
+   * Dashboard stat-card trend direction (Statistic.changeType). Currently
+   * shares hex values with status/priority/overdue tokens above, but kept
+   * semantically separate on purpose (Phase 12) — "positive change" is not
+   * the same concept as "done" or "low priority", and a future rebrand of
+   * one should not silently move the other.
+   */
+  --color-change-positive: #388e3c;
+  --color-change-negative: #d32f2f;
+  --color-change-neutral: #757575;
+
+  /*
    * Neutral text/border roles. Figma's neutral scale is true grey, not
    * Tailwind's blue-tinted `slate` — these are additive tokens for future
    * (Phase 12+) components to opt into; existing `slate-*` usage in the

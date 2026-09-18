@@ -43,6 +43,12 @@ export class TaskStore {
   readonly isLoading = this.taskResource.isLoading;
   /** Error from the GET /api/tasks read, distinct from `mutationError` below. */
   readonly readError = this.taskResource.error;
+  /**
+   * 'loading' (no data yet) vs 'reloading' (retrying while `tasks()` still
+   * holds the last resolved list) so consumers can tell a first fetch from a
+   * background refresh instead of collapsing both into `isLoading`.
+   */
+  readonly status = this.taskResource.status;
 
   readonly searchTerm = signal('');
   readonly statusFilter = signal<TaskStatus | 'all'>('all');

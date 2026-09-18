@@ -1,0 +1,10 @@
+<div class="rounded-lg bg-white p-6 shadow-card">
+  <div class="flex items-center gap-2">
+    <span class="text-sm leading-none" aria-hidden="true">{{ statistic().icon }}</span>
+    <span class="text-sm font-normal text-text-muted">{{ statistic().title }}</span>
+  </div>
+  <p class="mt-3 text-3xl font-bold text-text-heading">{{ statistic().value }}</p>
+  <p class="mt-1 text-xs" [class]="changeClass()">
+    {{ statistic().change }} {{ statistic().changeLabel }}
+  </p>
+</div>

@@ -1,0 +1,68 @@
+<h1 class="text-2xl font-bold text-text-heading">Dashboard</h1>
+
+<section class="mt-6" aria-labelledby="stats-heading">
+  <h2 id="stats-heading" class="sr-only">Task statistics</h2>
+
+  @if (statisticsSkeleton()) {
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
+      @for (i of [0, 1, 2, 3]; track i) {
+        <div class="animate-pulse rounded-lg bg-white p-6 shadow-card">
+          <div class="h-4 w-24 rounded bg-slate-200"></div>
+          <div class="mt-3 h-8 w-16 rounded bg-slate-200"></div>
+          <div class="mt-2 h-3 w-20 rounded bg-slate-200"></div>
+        </div>
+      }
+    </div>
+  } @else if (statisticsStatus() === 'error') {
+    <div role="alert" class="rounded-lg bg-white p-6 shadow-card">
+      <p class="text-sm text-change-negative">Couldn't load statistics.</p>
+      <button
+        type="button"
+        (click)="retryStatistics()"
+        aria-label="Retry loading statistics"
+        class="mt-3 rounded-sm bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover"
+      >
+        Retry
+      </button>
+    </div>
+  } @else {
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
+      @for (stat of statistics(); track stat.id) {
+        <app-stat-card [statistic]="stat" />
+      }
+    </div>
+  }
+</section>
+
+<section class="mt-8 rounded-lg bg-white p-6 shadow-card" aria-labelledby="activity-heading">
+  <div class="flex items-center justify-between">
+    <h2 id="activity-heading" class="text-lg font-semibold text-text-heading">Recent Activity</h2>
+    @if (activityStatus() === 'error') {
+      <button
+        type="button"
+        (click)="retryActivity()"
+        aria-label="Retry loading recent activity"
+        class="text-sm font-semibold text-primary hover:text-primary-hover"
+      >
+        Retry
+      </button>
+    }
+  </div>
+
+  <div class="mt-4">
+    @if (activitySkeleton()) {
+      <ul class="divide-y divide-border">
+        @for (i of [0, 1, 2]; track i) {
+          <li class="animate-pulse py-3">
+            <div class="h-4 w-40 rounded bg-slate-200"></div>
+            <div class="mt-2 h-3 w-28 rounded bg-slate-200"></div>
+          </li>
+        }
+      </ul>
+    } @else if (activityStatus() === 'error') {
+      <p class="text-sm text-change-negative">Couldn't load recent activity.</p>
+    } @else {
+      <app-activity-feed [items]="recentActivity()" />
+    }
+  </div>
+</section>
