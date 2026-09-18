@@ -119,29 +119,36 @@ describe('TaskDistributionChart', () => {
   });
 
   describe('legend visibility', () => {
-    function legendDisplay(): boolean {
-      return (lastConfig as { options: { plugins: { legend: { display: boolean } } } }).options
-        .plugins.legend.display;
+    interface LegendConfig {
+      display: boolean;
+      labels?: { boxWidth: number; padding: number; font: { size: number } };
+    }
+
+    function legendConfig(): LegendConfig {
+      return (lastConfig as { options: { plugins: { legend: LegendConfig } } }).options.plugins
+        .legend;
     }
 
     it('never shows a legend for the bar chart (Priority) — Chart.js would otherwise render a stray "undefined" dataset-label entry, since this chart never sets one', () => {
       createComponent({ type: 'bar', compact: false });
-      expect(legendDisplay()).toBe(false);
+      expect(legendConfig().display).toBe(false);
     });
 
     it('keeps the bar legend hidden when compact too', () => {
       createComponent({ type: 'bar', compact: true });
-      expect(legendDisplay()).toBe(false);
+      expect(legendConfig().display).toBe(false);
     });
 
-    it('shows the legend for the doughnut chart (Status) when not compact', () => {
+    it('shows the legend for the doughnut chart (Status) when not compact, at full size', () => {
       createComponent({ type: 'doughnut', compact: false });
-      expect(legendDisplay()).toBe(true);
+      expect(legendConfig().display).toBe(true);
+      expect(legendConfig().labels).toBeUndefined();
     });
 
-    it('hides the doughnut legend when compact', () => {
+    it('keeps the doughnut legend visible when compact, shrunk to fit — Dashboard has no other visible color key since its breakdown is sr-only', () => {
       createComponent({ type: 'doughnut', compact: true });
-      expect(legendDisplay()).toBe(false);
+      expect(legendConfig().display).toBe(true);
+      expect(legendConfig().labels).toEqual({ boxWidth: 8, padding: 6, font: { size: 10 } });
     });
   });
 
@@ -171,4 +178,26 @@ describe('TaskDistributionChart', () => {
 
     expect(destroySpy).toHaveBeenCalled();
   });
+
+  it(
+    'recreates the chart, destroying the previous instance, when a reactive input changes ' +
+      'after the initial render — guards the effect()→afterRenderEffect migration: chart ' +
+      'creation must stay tied to every render in which its signal inputs are dirty, not just ' +
+      'the very first one',
+    () => {
+      const fixture = createComponent({ type: 'doughnut', compact: false });
+      const initialConfig = lastConfig;
+      destroySpy.mockClear();
+
+      fixture.componentRef.setInput('compact', true);
+      fixture.detectChanges();
+
+      expect(destroySpy).toHaveBeenCalledTimes(1);
+      expect(lastConfig).not.toBe(initialConfig);
+      expect(
+        (lastConfig as { options: { plugins: { legend: { labels?: unknown } } } }).options.plugins
+          .legend.labels,
+      ).toEqual({ boxWidth: 8, padding: 6, font: { size: 10 } });
+    },
+  );
 });
