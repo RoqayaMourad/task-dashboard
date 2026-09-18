@@ -145,6 +145,18 @@ describe('TaskDistributionChart', () => {
     });
   });
 
+  it('scopes the chart height to the canvas wrapper only, never to the host, so the visible breakdown is never height-clipped', () => {
+    const fixture = createComponent({ compact: false });
+    const root: HTMLElement = fixture.nativeElement;
+    const canvas = root.querySelector('canvas') as HTMLCanvasElement;
+    const chartWrapper = canvas.parentElement as HTMLElement;
+    const list = root.querySelector('ul') as HTMLElement;
+
+    expect(chartWrapper.classList.contains('h-64')).toBe(true);
+    expect(root.classList.contains('h-64')).toBe(false);
+    expect(chartWrapper.contains(list)).toBe(false);
+  });
+
   it('renders an accessible text breakdown matching the given data, in both modes', () => {
     const fixture = createComponent();
     const text = fixture.nativeElement.querySelector('ul').textContent as string;

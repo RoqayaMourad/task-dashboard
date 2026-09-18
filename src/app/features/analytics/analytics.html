@@ -37,7 +37,7 @@
         <div class="rounded-lg bg-white p-6 shadow-card">
           <h3 class="text-base font-semibold text-text-heading">Priority distribution</h3>
           <app-task-distribution-chart
-            class="mt-4 block h-64"
+            class="mt-4"
             type="bar"
             [data]="priorityData()"
             [colorVars]="priorityColorVars"
@@ -47,7 +47,7 @@
         <div class="rounded-lg bg-white p-6 shadow-card">
           <h3 class="text-base font-semibold text-text-heading">Status distribution</h3>
           <app-task-distribution-chart
-            class="mt-4 block h-64"
+            class="mt-4"
             type="doughnut"
             [data]="statusData()"
             [colorVars]="statusColorVars"

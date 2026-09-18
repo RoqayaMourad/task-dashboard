@@ -64,11 +64,17 @@ export function mapToChartDataset(
  * Colors are read from the app's existing CSS custom properties
  * (`--color-priority-*`/`--color-status-*` in styles.css) via
  * `getComputedStyle`, not duplicated as a second hex table.
+ *
+ * The height a caller passes (`chartHeightClass`) is scoped to the canvas
+ * wrapper only, never to the host — the host sizes naturally to canvas +
+ * breakdown, so the visible breakdown (non-compact mode) is never clipped
+ * or pushed outside a fixed-height ancestor.
  */
 @Component({
   selector: 'app-task-distribution-chart',
   templateUrl: './task-distribution-chart.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'block' },
 })
 export class TaskDistributionChart implements OnDestroy {
   readonly type = input.required<'bar' | 'doughnut'>();
@@ -78,6 +84,8 @@ export class TaskDistributionChart implements OnDestroy {
   readonly colorVars = input.required<Record<string, string>>();
   /** Hides the built-in legend and `sr-only`-hides the text breakdown — Dashboard's compact presentation. */
   readonly compact = input(false);
+  /** Tailwind height utility applied to the canvas wrapper only (e.g. `h-32` compact, `h-64` full) — see class doc above. */
+  readonly chartHeightClass = input('h-64');
 
   private readonly canvasRef = viewChild<ElementRef<HTMLCanvasElement>>('canvas');
   private chart: Chart | undefined;

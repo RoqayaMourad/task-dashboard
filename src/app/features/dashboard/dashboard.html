@@ -103,23 +103,25 @@
         <div class="h-48 rounded-lg bg-white p-4 shadow-card">
           <h3 class="text-sm font-semibold text-text-heading">Priority</h3>
           <app-task-distribution-chart
-            class="mt-2 block h-32"
+            class="mt-2"
             type="bar"
             [data]="priorityData()"
             [colorVars]="priorityColorVars"
             ariaLabel="Task count by priority"
             [compact]="true"
+            chartHeightClass="h-32"
           />
         </div>
         <div class="h-48 rounded-lg bg-white p-4 shadow-card">
           <h3 class="text-sm font-semibold text-text-heading">Status</h3>
           <app-task-distribution-chart
-            class="mt-2 block h-32"
+            class="mt-2"
             type="doughnut"
             [data]="statusData()"
             [colorVars]="statusColorVars"
             ariaLabel="Task count by status"
             [compact]="true"
+            chartHeightClass="h-32"
           />
         </div>
       </div>
