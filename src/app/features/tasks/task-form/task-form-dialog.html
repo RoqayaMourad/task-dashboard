@@ -6,6 +6,7 @@
   [dismissableMask]="false"
   [header]="mode() === 'create' ? 'New Task' : 'Edit Task'"
   [style]="{ width: '32rem' }"
+  [breakpoints]="{ '640px': '90vw' }"
   (visibleChange)="onDialogVisibleChange($event)"
 >
   <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
@@ -149,7 +150,7 @@
           @for (tagControl of tagControls; track $index) {
             <span
               role="listitem"
-              class="flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-xs text-text-heading"
+              class="flex max-w-full min-w-0 items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-xs break-words text-text-heading"
             >
               {{ tagControl.value }}
               <button
