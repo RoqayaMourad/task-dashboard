@@ -10,6 +10,9 @@ import {
 } from '../models/task.model';
 import { resolveCompletedAt } from '../models/task-completion';
 import { filterTasks, groupTasksByStatus } from '../models/task-filtering';
+import { HttpCache } from '../http/http-cache';
+
+const TASKS_URL = '/api/tasks';
 
 /** What json-server may literally send back — `completedAt` as `null`, not absent, once cleared via PATCH. */
 type TaskWire = Omit<Task, 'completedAt'> & { completedAt?: string | null };
@@ -32,8 +35,9 @@ function normalize(raw: TaskWire): Task {
 @Injectable({ providedIn: 'root' })
 export class TaskStore {
   private readonly http = inject(HttpClient);
+  private readonly cache = inject(HttpCache);
 
-  private readonly taskResource = httpResource<Task[]>(() => '/api/tasks', { defaultValue: [] });
+  private readonly taskResource = httpResource<Task[]>(() => TASKS_URL, { defaultValue: [] });
 
   readonly tasks = computed(() => this.taskResource.value());
   readonly isLoading = this.taskResource.isLoading;
@@ -74,9 +78,10 @@ export class TaskStore {
         updatedAt: now,
         completedAt: resolveCompletedAt(undefined, input.status, undefined, now),
       };
-      const raw = await firstValueFrom(this.http.post<TaskWire>('/api/tasks', body));
+      const raw = await firstValueFrom(this.http.post<TaskWire>(TASKS_URL, body));
       const created = normalize(raw);
       this.taskResource.update((tasks) => [...tasks, created]);
+      this.cache.delete(TASKS_URL);
       this.endMutation();
       return created;
     } catch (err) {
@@ -99,9 +104,10 @@ export class TaskStore {
         updatedAt: now,
         completedAt: resolveCompletedAt(existing.status, nextStatus, existing.completedAt, now),
       };
-      const raw = await firstValueFrom(this.http.patch<TaskWire>(`/api/tasks/${id}`, body));
+      const raw = await firstValueFrom(this.http.patch<TaskWire>(`${TASKS_URL}/${id}`, body));
       const updated = normalize(raw);
       this.taskResource.update((tasks) => tasks.map((task) => (task.id === id ? updated : task)));
+      this.cache.delete(TASKS_URL);
       this.endMutation();
       return updated;
     } catch (err) {
@@ -113,8 +119,9 @@ export class TaskStore {
   async remove(id: string): Promise<void> {
     this.beginMutation();
     try {
-      await firstValueFrom(this.http.delete<void>(`/api/tasks/${id}`));
+      await firstValueFrom(this.http.delete<void>(`${TASKS_URL}/${id}`));
       this.taskResource.update((tasks) => tasks.filter((task) => task.id !== id));
+      this.cache.delete(TASKS_URL);
       this.endMutation();
     } catch (err) {
       this.failMutation(err);

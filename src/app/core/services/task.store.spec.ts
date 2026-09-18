@@ -1,7 +1,14 @@
-import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
+import {
+  HttpErrorResponse,
+  HttpResponse,
+  provideHttpClient,
+  withInterceptors,
+} from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { Task } from '../models/task.model';
+import { HttpCache } from '../http/http-cache';
+import { cacheInterceptor } from '../http/cache.interceptor';
 import { TaskStore } from './task.store';
 
 function flushMacrotask(): Promise<void> {
@@ -236,5 +243,66 @@ describe('TaskStore', () => {
       await flushMacrotask();
       expect(store.tasks().map((t) => t.id)).toEqual(['t-1', 't-2']);
     });
+  });
+});
+
+describe('TaskStore cache invalidation (with the real cache interceptor wired in)', () => {
+  let httpMock: HttpTestingController;
+  let store: TaskStore;
+  let cache: HttpCache;
+
+  async function setupWithInitialTasks(tasks: Task[]): Promise<void> {
+    await flushMacrotask();
+    httpMock.expectOne('/api/tasks').flush(tasks);
+    await flushMacrotask();
+  }
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(withInterceptors([cacheInterceptor])),
+        provideHttpClientTesting(),
+      ],
+    });
+    store = TestBed.inject(TaskStore);
+    cache = TestBed.inject(HttpCache);
+    httpMock = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => httpMock.verify());
+
+  it('invalidates the /api/tasks cache entry after a successful mutation, so a reload reaches HTTP again', async () => {
+    await setupWithInitialTasks([fixtureTask({ id: 't-1' })]);
+    expect(cache.get('/api/tasks')).toBeTruthy(); // the initial GET populated the cache
+
+    const promise = store.update('t-1', { title: 'renamed' });
+    httpMock
+      .expectOne({ url: '/api/tasks/t-1', method: 'PATCH' })
+      .flush(fixtureTask({ id: 't-1', title: 'renamed' }));
+    await promise;
+
+    expect(cache.get('/api/tasks')).toBeUndefined();
+
+    store.reload();
+    await flushMacrotask();
+    httpMock.expectOne('/api/tasks').flush([fixtureTask({ id: 't-1', title: 'renamed' })]);
+    await flushMacrotask();
+  });
+
+  it('leaves /api/statistics and /api/users cache entries untouched by a task mutation', async () => {
+    await setupWithInitialTasks([fixtureTask({ id: 't-1' })]);
+    const statisticsEntry = new HttpResponse({ body: [{ id: 'stat-001' }] });
+    const usersEntry = new HttpResponse({ body: [{ id: 'user-001' }] });
+    cache.set('/api/statistics', statisticsEntry);
+    cache.set('/api/users', usersEntry);
+
+    const promise = store.update('t-1', { title: 'renamed' });
+    httpMock
+      .expectOne({ url: '/api/tasks/t-1', method: 'PATCH' })
+      .flush(fixtureTask({ id: 't-1', title: 'renamed' }));
+    await promise;
+
+    expect(cache.get('/api/statistics')).toBe(statisticsEntry);
+    expect(cache.get('/api/users')).toBe(usersEntry);
   });
 });
