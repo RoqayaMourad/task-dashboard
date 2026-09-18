@@ -1,5 +1,10 @@
 <div class="flex min-h-dvh flex-col bg-slate-50">
-  <app-topbar [sidebarOpen]="sidebarOpen()" (toggleSidebar)="toggleSidebar()" />
+  <app-topbar
+    [sidebarOpen]="sidebarOpen()"
+    [searchEnabled]="searchEnabled()"
+    (toggleSidebar)="toggleSidebar()"
+    (searchChange)="onSearch($event)"
+  />
 
   <div class="flex flex-1">
     <app-sidebar [open]="sidebarOpen()" (navigated)="closeSidebar()" />
@@ -13,7 +18,7 @@
     }
 
     <main class="min-w-0 flex-1 p-4 lg:p-6">
-      <router-outlet />
+      <router-outlet (activate)="onRouteActivate($event)" (deactivate)="onRouteDeactivate()" />
     </main>
   </div>
 </div>

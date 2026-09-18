@@ -2,6 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Assignee, Task } from '../../core/models/task.model';
+import { TaskStore } from '../../core/services/task.store';
 import { TaskBoardPage } from './task-board.page';
 
 function flushMacrotask(): Promise<void> {
@@ -159,5 +160,42 @@ describe('TaskBoardPage', () => {
     const select: HTMLSelectElement = fixture.nativeElement.querySelector('#assignee-filter');
     expect(select.disabled).toBe(true);
     expect(fixture.nativeElement.querySelectorAll('app-task-card').length).toBe(1);
+  });
+
+  it('filters the board by title/description when setSearchTerm() updates TaskStore', async () => {
+    fixture.detectChanges();
+    await flushMacrotask();
+    await flushTasks([
+      fixtureTask({ id: 't-1', title: 'Design homepage', description: 'Create wireframes' }),
+      fixtureTask({ id: 't-2', title: 'Fix login bug', description: 'Session token expires' }),
+    ]);
+    await flushUsers();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('app-task-card').length).toBe(2);
+
+    fixture.componentInstance.setSearchTerm('wireframes');
+    fixture.detectChanges();
+
+    const cards = fixture.nativeElement.querySelectorAll('app-task-card');
+    expect(cards.length).toBe(1);
+    expect(TestBed.inject(TaskStore).searchTerm()).toBe('wireframes');
+  });
+
+  it('resets only TaskStore.searchTerm on destroy', async () => {
+    fixture.detectChanges();
+    await flushMacrotask();
+    await flushTasks([fixtureTask()]);
+    await flushUsers();
+    fixture.detectChanges();
+
+    const taskStore = TestBed.inject(TaskStore);
+    fixture.componentInstance.setSearchTerm('homepage');
+    taskStore.statusFilter.set('done');
+    expect(taskStore.searchTerm()).toBe('homepage');
+
+    fixture.destroy();
+
+    expect(taskStore.searchTerm()).toBe('');
+    expect(taskStore.statusFilter()).toBe('done');
   });
 });

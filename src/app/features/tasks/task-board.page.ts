@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, computed, inject } from '@angular/core';
+import { RouteSearchable } from '../../layout/shell/route-searchable';
 import { TaskStore } from '../../core/services/task.store';
 import { UserService } from '../../core/services/user.service';
 import { TaskStatus } from '../../core/models/task.model';
@@ -12,10 +13,14 @@ const COLUMNS: ReadonlyArray<{ status: TaskStatus; label: string }> = [
 ];
 
 /**
- * Smart/container. Read-only this increment: filtering only, no search
- * (Increment 2) and no create/edit/delete (Increment 3) — the "+ New Task"
- * trigger and each card's kebab menu stay genuinely disabled/absent rather
- * than fake-interactive.
+ * Smart/container. Read-only this increment: filtering + search only, no
+ * create/edit/delete (Increment 3) — the "+ New Task" trigger and each
+ * card's kebab menu stay genuinely disabled/absent rather than fake-interactive.
+ *
+ * Implements `RouteSearchable` so Shell can forward Topbar search input here
+ * without injecting `TaskStore` itself. `TaskStore.searchTerm` resets on
+ * destroy so leaving and returning to `/tasks` always starts unfiltered,
+ * matching Topbar's own reset when the route deactivates.
  */
 @Component({
   selector: 'app-task-board-page',
@@ -23,7 +28,7 @@ const COLUMNS: ReadonlyArray<{ status: TaskStatus; label: string }> = [
   templateUrl: './task-board.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TaskBoardPage {
+export class TaskBoardPage implements RouteSearchable, OnDestroy {
   private readonly taskStore = inject(TaskStore);
   private readonly userService = inject(UserService);
 
@@ -56,5 +61,13 @@ export class TaskBoardPage {
 
   protected retryTasks(): void {
     this.taskStore.reload();
+  }
+
+  setSearchTerm(term: string): void {
+    this.taskStore.searchTerm.set(term);
+  }
+
+  ngOnDestroy(): void {
+    this.taskStore.searchTerm.set('');
   }
 }
