@@ -15,6 +15,7 @@ describe('TaskFiltersBar', () => {
       assigneeFilter?: string;
       assigneeOptions?: Assignee[];
       assigneeOptionsStatus?: string;
+      mutationPending?: boolean;
     } = {},
   ) {
     const fixture = TestBed.createComponent(TaskFiltersBar);
@@ -26,6 +27,7 @@ describe('TaskFiltersBar', () => {
       'assigneeOptionsStatus',
       overrides.assigneeOptionsStatus ?? 'resolved',
     );
+    fixture.componentRef.setInput('mutationPending', overrides.mutationPending ?? false);
     fixture.detectChanges();
     return fixture;
   }
@@ -106,12 +108,39 @@ describe('TaskFiltersBar', () => {
     expect(select.value).toBe('user-002');
   });
 
-  it('renders the New Task trigger as genuinely disabled, not fake-interactive', () => {
-    const fixture = createComponent();
-    const button: HTMLButtonElement = fixture.nativeElement.querySelector(
-      'button[title*="Increment 3"]',
+  function newTaskButton(fixture: ReturnType<typeof createComponent>): HTMLButtonElement {
+    const buttons: HTMLButtonElement[] = Array.from(
+      fixture.nativeElement.querySelectorAll('button'),
     );
+    return buttons.find((b) => b.textContent?.trim() === '+ New Task')!;
+  }
 
-    expect(button.disabled).toBe(true);
+  it('renders the New Task trigger enabled and emits newTaskRequested on click', () => {
+    const fixture = createComponent();
+    const button = newTaskButton(fixture);
+    expect(button.disabled).toBe(false);
+
+    const emitted = vi.fn();
+    fixture.componentInstance.newTaskRequested.subscribe(emitted);
+    button.click();
+
+    expect(emitted).toHaveBeenCalledTimes(1);
+  });
+
+  it('disables the New Task trigger while a mutation is pending', () => {
+    const fixture = createComponent({ mutationPending: true });
+
+    expect(newTaskButton(fixture).disabled).toBe(true);
+  });
+
+  it('moves focus to the New Task button on focusNewTaskButton()', () => {
+    const fixture = createComponent();
+    const button = newTaskButton(fixture);
+    button.blur();
+    expect(document.activeElement).not.toBe(button);
+
+    fixture.componentInstance.focusNewTaskButton();
+
+    expect(document.activeElement).toBe(button);
   });
 });

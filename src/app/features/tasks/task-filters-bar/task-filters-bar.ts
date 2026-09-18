@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, input, output, ResourceStatus } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  input,
+  output,
+  ResourceStatus,
+  viewChild,
+} from '@angular/core';
 import { Assignee, TaskPriority, TaskStatus } from '../../../core/models/task.model';
 
 interface StatusOption {
@@ -29,10 +37,19 @@ export class TaskFiltersBar {
   readonly assigneeFilter = input.required<string | 'all'>();
   readonly assigneeOptions = input.required<Assignee[]>();
   readonly assigneeOptionsStatus = input.required<ResourceStatus>();
+  readonly mutationPending = input(false);
 
   readonly statusFilterChange = output<TaskStatus | 'all'>();
   readonly priorityFilterChange = output<TaskPriority | 'all'>();
   readonly assigneeFilterChange = output<string | 'all'>();
+  readonly newTaskRequested = output<void>();
 
   protected readonly statusOptions = STATUS_OPTIONS;
+
+  private readonly newTaskButton = viewChild<ElementRef<HTMLButtonElement>>('newTaskButton');
+
+  /** Returns focus to the New Task trigger — called by TaskBoardPage after the create/edit dialog closes. */
+  focusNewTaskButton(): void {
+    this.newTaskButton()?.nativeElement.focus();
+  }
 }

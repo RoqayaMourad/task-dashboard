@@ -21,11 +21,31 @@ function fixtureTask(overrides: Partial<Task> = {}): Task {
 }
 
 describe('TaskCard', () => {
-  function createComponent(task: Task) {
+  function createComponent(task: Task, mutationPending = false) {
     const fixture = TestBed.createComponent(TaskCard);
     fixture.componentRef.setInput('task', task);
+    fixture.componentRef.setInput('mutationPending', mutationPending);
     fixture.detectChanges();
     return fixture;
+  }
+
+  function kebabButton(fixture: ReturnType<typeof createComponent>): HTMLButtonElement {
+    return fixture.nativeElement.querySelector('button[aria-haspopup="menu"]');
+  }
+
+  function openMenu(fixture: ReturnType<typeof createComponent>): void {
+    kebabButton(fixture).click();
+    fixture.detectChanges();
+  }
+
+  /** Clicks a popup menu item by its label — the actual click handler lives on the item's inner content element, not the `role="menuitem"` <li> itself. */
+  function clickMenuItem(fixture: ReturnType<typeof createComponent>, text: string): void {
+    const items: HTMLElement[] = Array.from(
+      fixture.nativeElement.querySelectorAll('[role="menuitem"]'),
+    );
+    const item = items.find((el) => el.textContent?.trim() === text)!;
+    const content = item.querySelector<HTMLElement>('.p-menu-item-content')!;
+    content.click();
   }
 
   it('renders title, description, tag, priority and due-date label', () => {
@@ -45,7 +65,9 @@ describe('TaskCard', () => {
     expect(fixture.nativeElement.textContent).toContain('@Sarah');
     expect(fixture.nativeElement.textContent).not.toContain('Sarah Smith');
 
-    const assigneeRow: HTMLElement = fixture.nativeElement.querySelector('[aria-label]');
+    const assigneeRow: HTMLElement = fixture.nativeElement.querySelector(
+      '[aria-label^="Assigned to"]',
+    );
     expect(assigneeRow.getAttribute('aria-label')).toBe('Assigned to Sarah Smith');
   });
 
@@ -80,5 +102,41 @@ describe('TaskCard', () => {
     const fixture = createComponent(fixtureTask({ title: 'Prepare budget report', tags: [] }));
 
     expect(fixture.nativeElement.textContent).not.toContain('Design');
+  });
+
+  it('names the kebab trigger after the specific task', () => {
+    const fixture = createComponent(fixtureTask({ title: 'Design homepage' }));
+
+    expect(kebabButton(fixture).getAttribute('aria-label')).toBe('Actions for Design homepage');
+  });
+
+  it('emits editRequested with the task and the kebab button as the trigger', () => {
+    const task = fixtureTask();
+    const fixture = createComponent(task);
+    const emitted = vi.fn();
+    fixture.componentInstance.editRequested.subscribe(emitted);
+
+    openMenu(fixture);
+    clickMenuItem(fixture, 'Edit');
+
+    expect(emitted).toHaveBeenCalledWith({ task, trigger: kebabButton(fixture) });
+  });
+
+  it('emits deleteRequested with the task and the kebab button as the trigger', () => {
+    const task = fixtureTask();
+    const fixture = createComponent(task);
+    const emitted = vi.fn();
+    fixture.componentInstance.deleteRequested.subscribe(emitted);
+
+    openMenu(fixture);
+    clickMenuItem(fixture, 'Delete');
+
+    expect(emitted).toHaveBeenCalledWith({ task, trigger: kebabButton(fixture) });
+  });
+
+  it('disables the kebab trigger while a mutation is pending', () => {
+    const fixture = createComponent(fixtureTask(), true);
+
+    expect(kebabButton(fixture).disabled).toBe(true);
   });
 });

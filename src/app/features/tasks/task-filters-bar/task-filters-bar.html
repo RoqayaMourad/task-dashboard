@@ -57,11 +57,11 @@
     </select>
 
     <button
+      #newTaskButton
       type="button"
-      disabled
-      aria-disabled="true"
-      title="Available once task creation ships (Increment 3)"
-      class="cursor-not-allowed rounded bg-primary px-4 py-2 text-sm font-semibold text-white opacity-50"
+      [disabled]="mutationPending()"
+      (click)="newTaskRequested.emit()"
+      class="rounded bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
     >
       + New Task
     </button>

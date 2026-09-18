@@ -1,0 +1,212 @@
+<p-dialog
+  [visible]="visible()"
+  [modal]="true"
+  [closable]="!pending()"
+  [closeOnEscape]="!pending()"
+  [dismissableMask]="false"
+  [header]="mode() === 'create' ? 'New Task' : 'Edit Task'"
+  [style]="{ width: '32rem' }"
+  (visibleChange)="onDialogVisibleChange($event)"
+>
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+    <fieldset [disabled]="pending()" class="flex flex-col gap-4">
+      <div>
+        <label for="task-title" class="block text-sm font-medium text-text-heading">Title</label>
+        <input
+          id="task-title"
+          type="text"
+          formControlName="title"
+          class="mt-1 w-full rounded border border-border px-3 py-2 text-sm"
+          [attr.aria-invalid]="fieldInvalid('title')"
+          [attr.aria-describedby]="fieldInvalid('title') ? 'task-title-error' : null"
+        />
+        @if (fieldInvalid('title')) {
+          <p id="task-title-error" class="mt-1 text-xs text-change-negative">
+            @if (form.controls.title.errors?.['whitespaceTitle']) {
+              Title cannot be blank.
+            } @else {
+              Title is required.
+            }
+          </p>
+        }
+      </div>
+
+      <div>
+        <label for="task-description" class="block text-sm font-medium text-text-heading">
+          Description
+        </label>
+        <textarea
+          id="task-description"
+          formControlName="description"
+          rows="3"
+          class="mt-1 w-full rounded border border-border px-3 py-2 text-sm"
+          [attr.aria-invalid]="fieldInvalid('description')"
+          [attr.aria-describedby]="fieldInvalid('description') ? 'task-description-error' : null"
+        ></textarea>
+        @if (fieldInvalid('description')) {
+          <p id="task-description-error" class="mt-1 text-xs text-change-negative">
+            Description is required.
+          </p>
+        }
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label for="task-priority" class="block text-sm font-medium text-text-heading">
+            Priority
+          </label>
+          <select
+            id="task-priority"
+            formControlName="priority"
+            class="mt-1 w-full rounded border border-border px-3 py-2 text-sm"
+          >
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="task-status" class="block text-sm font-medium text-text-heading">
+            Status
+          </label>
+          <select
+            id="task-status"
+            formControlName="status"
+            class="mt-1 w-full rounded border border-border px-3 py-2 text-sm"
+          >
+            <option value="todo">To Do</option>
+            <option value="in_progress">In Progress</option>
+            <option value="done">Done</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label for="task-due-date" class="block text-sm font-medium text-text-heading">
+            Due date
+          </label>
+          <input
+            id="task-due-date"
+            type="date"
+            formControlName="dueDate"
+            class="mt-1 w-full rounded border border-border px-3 py-2 text-sm"
+            [attr.aria-invalid]="fieldInvalid('dueDate')"
+            [attr.aria-describedby]="fieldInvalid('dueDate') ? 'task-due-date-error' : null"
+          />
+          @if (fieldInvalid('dueDate')) {
+            <p id="task-due-date-error" class="mt-1 text-xs text-change-negative">
+              Due date is required.
+            </p>
+          }
+        </div>
+
+        <div>
+          <label for="task-assignee" class="block text-sm font-medium text-text-heading">
+            Assignee
+          </label>
+          <select
+            id="task-assignee"
+            formControlName="assigneeId"
+            class="mt-1 w-full rounded border border-border px-3 py-2 text-sm"
+            [attr.aria-invalid]="assigneeInvalid()"
+            [attr.aria-describedby]="assigneeInvalid() ? 'task-assignee-error' : null"
+          >
+            @switch (assigneeOptionsStatus()) {
+              @case ('loading') {
+                <option value="">Loading assignees…</option>
+              }
+              @case ('error') {
+                <option value="">Assignees unavailable</option>
+              }
+              @default {
+                <option value="" [selected]="!form.controls.assigneeId.value">
+                  Select assignee
+                </option>
+                @for (assignee of assigneeOptions(); track assignee.id) {
+                  <option
+                    [value]="assignee.id"
+                    [selected]="assignee.id === form.controls.assigneeId.value"
+                  >
+                    {{ assignee.name }}
+                  </option>
+                }
+              }
+            }
+          </select>
+          @if (assigneeInvalid()) {
+            <p id="task-assignee-error" class="mt-1 text-xs text-change-negative">
+              {{ assigneeErrorMessage() }}
+            </p>
+          }
+        </div>
+      </div>
+
+      <div>
+        <span id="task-tags-label" class="block text-sm font-medium text-text-heading">Tags</span>
+        <div class="mt-1 flex flex-wrap gap-2" role="list" aria-labelledby="task-tags-label">
+          @for (tagControl of tagControls; track $index) {
+            <span
+              role="listitem"
+              class="flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-xs text-text-heading"
+            >
+              {{ tagControl.value }}
+              <button
+                type="button"
+                class="text-slate-400 hover:text-slate-600"
+                [attr.aria-label]="'Remove tag ' + tagControl.value"
+                (click)="removeTag($index)"
+              >
+                &times;
+              </button>
+            </span>
+          }
+        </div>
+        <div class="mt-2 flex gap-2">
+          <label class="sr-only" for="task-new-tag">Add a tag</label>
+          <input
+            id="task-new-tag"
+            type="text"
+            [value]="newTagValue()"
+            (input)="newTagValue.set($any($event.target).value)"
+            (keydown.enter)="$event.preventDefault(); addTag()"
+            class="flex-1 rounded border border-border px-3 py-2 text-sm"
+          />
+          <button
+            type="button"
+            (click)="addTag()"
+            class="rounded border border-border px-3 py-2 text-sm text-text-heading"
+          >
+            Add
+          </button>
+        </div>
+        @if (tagsInvalid()) {
+          <p class="mt-1 text-xs text-change-negative">{{ tagsErrorMessage() }}</p>
+        }
+      </div>
+
+      @if (errorMessage(error()); as message) {
+        <p role="alert" class="text-sm text-change-negative">{{ message }}</p>
+      }
+    </fieldset>
+
+    <div class="mt-4 flex justify-end gap-2">
+      <button
+        type="button"
+        (click)="onCancel()"
+        [disabled]="pending()"
+        class="rounded border border-border px-4 py-2 text-sm font-medium text-text-heading disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        Cancel
+      </button>
+      <button
+        type="submit"
+        [disabled]="!canSubmit()"
+        class="rounded bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {{ pending() ? 'Saving…' : 'Save' }}
+      </button>
+    </div>
+  </form>
+</p-dialog>

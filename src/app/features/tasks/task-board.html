@@ -7,11 +7,19 @@
     [assigneeFilter]="assigneeFilter()"
     [assigneeOptions]="assigneeOptions()"
     [assigneeOptionsStatus]="assigneeOptionsStatus()"
+    [mutationPending]="mutationPending()"
     (statusFilterChange)="statusFilter.set($event)"
     (priorityFilterChange)="priorityFilter.set($event)"
     (assigneeFilterChange)="assigneeFilter.set($event)"
+    (newTaskRequested)="openCreateForm()"
   />
 </div>
+
+@if (showDeleteErrorBanner()) {
+  <div role="alert" class="mt-4 rounded-lg bg-white p-4 shadow-chrome">
+    <p class="text-sm text-change-negative">{{ deleteErrorMessage() }}</p>
+  </div>
+}
 
 <div class="mt-6">
   @if (boardSkeleton()) {
@@ -42,8 +50,25 @@
           [status]="col.status"
           [label]="col.label"
           [tasks]="tasksByStatus()[col.status]"
+          [mutationPending]="mutationPending()"
+          (editRequested)="openEditForm($event)"
+          (deleteRequested)="confirmDelete($event)"
         />
       }
     </div>
   }
 </div>
+
+<app-task-form-dialog
+  [visible]="formOpen()"
+  [mode]="formMode()"
+  [task]="editingTask()"
+  [assigneeOptions]="assigneeOptions()"
+  [assigneeOptionsStatus]="assigneeOptionsStatus()"
+  [pending]="mutationPending()"
+  [error]="mutationError()"
+  (save)="handleSave($event)"
+  (dismissed)="closeForm()"
+/>
+
+<p-confirmDialog />

@@ -225,4 +225,244 @@ describe('TaskBoardPage', () => {
     expect(taskStore.searchTerm()).toBe('');
     expect(taskStore.statusFilter()).toBe('done');
   });
+
+  // --- Increment 3: Create / Edit / Delete -----------------------------
+
+  async function boardReady(tasks: Task[] = [fixtureTask()]): Promise<void> {
+    fixture.detectChanges();
+    await flushMacrotask();
+    await flushTasks(tasks);
+    await flushUsers();
+    fixture.detectChanges();
+  }
+
+  function buttonByText(text: string): HTMLButtonElement {
+    const buttons: HTMLButtonElement[] = Array.from(
+      fixture.nativeElement.querySelectorAll('button'),
+    );
+    return buttons.find((b) => b.textContent?.trim() === text)!;
+  }
+
+  function setValue(selector: string, value: string): void {
+    const el = fixture.nativeElement.querySelector(selector) as
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+    el.value = value;
+    el.dispatchEvent(new Event(el.tagName === 'SELECT' ? 'change' : 'input'));
+    fixture.detectChanges();
+  }
+
+  function kebabButton(): HTMLButtonElement {
+    return fixture.nativeElement.querySelector('button[aria-haspopup="menu"]');
+  }
+
+  function clickMenuItem(text: string): void {
+    kebabButton().click();
+    fixture.detectChanges();
+    const items: HTMLElement[] = Array.from(
+      fixture.nativeElement.querySelectorAll('[role="menuitem"]'),
+    );
+    const item = items.find((el) => el.textContent?.trim() === text)!;
+    item.querySelector<HTMLElement>('.p-menu-item-content')!.click();
+    fixture.detectChanges();
+  }
+
+  function fillValidTaskForm(): void {
+    setValue('#task-title', 'Ship the feature');
+    setValue('#task-description', 'Write the code');
+    setValue('#task-due-date', '2026-10-01');
+    setValue('#task-assignee', assignee.id);
+  }
+
+  function submitForm(): void {
+    (fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+  }
+
+  it('opens the create dialog on New Task and creates via TaskStore, leaving completedAt to it', async () => {
+    await boardReady([]);
+
+    buttonByText('+ New Task').click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('New Task');
+
+    fillValidTaskForm();
+    setValue('#task-status', 'done');
+    submitForm();
+
+    const req = httpMock.expectOne('/api/tasks');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body.title).toBe('Ship the feature');
+    // The form has no notion of completedAt at all (CreateTaskInput has no
+    // such field) — TaskStore.create() is what stamped this, via
+    // resolveCompletedAt(undefined, 'done', undefined, now).
+    expect(typeof req.request.body.completedAt).toBe('string');
+
+    req.flush({
+      ...req.request.body,
+      id: 'new-1',
+      assignee,
+    });
+    await flushMacrotask();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('#task-title')).toBeNull();
+    expect(fixture.nativeElement.querySelectorAll('app-task-card').length).toBe(1);
+  });
+
+  it('keeps the create dialog open with an inline error, preserving values, on failure', async () => {
+    await boardReady([]);
+
+    buttonByText('+ New Task').click();
+    fixture.detectChanges();
+    fillValidTaskForm();
+    submitForm();
+
+    const req = httpMock.expectOne('/api/tasks');
+    req.flush('boom', { status: 500, statusText: 'Server Error' });
+    await flushMacrotask();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('New Task');
+    expect(fixture.nativeElement.textContent).toContain('Something went wrong (500)');
+    expect((fixture.nativeElement.querySelector('#task-title') as HTMLInputElement).value).toBe(
+      'Ship the feature',
+    );
+  });
+
+  it('opens the edit dialog pre-filled from the kebab menu and updates via TaskStore', async () => {
+    await boardReady([fixtureTask({ id: 't-1', title: 'Design homepage' })]);
+
+    clickMenuItem('Edit');
+
+    expect(fixture.nativeElement.textContent).toContain('Edit Task');
+    expect((fixture.nativeElement.querySelector('#task-title') as HTMLInputElement).value).toBe(
+      'Design homepage',
+    );
+
+    setValue('#task-title', 'Design new homepage');
+    submitForm();
+
+    const req = httpMock.expectOne('/api/tasks/t-1');
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body.title).toBe('Design new homepage');
+
+    req.flush({ ...fixtureTask({ id: 't-1', title: 'Design new homepage' }) });
+    await flushMacrotask();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).not.toContain('Edit Task');
+    expect(fixture.nativeElement.textContent).toContain('Design new homepage');
+  });
+
+  it('disables New Task and every kebab trigger while a mutation is pending', async () => {
+    await boardReady([fixtureTask({ id: 't-1' })]);
+
+    buttonByText('+ New Task').click();
+    fixture.detectChanges();
+    fillValidTaskForm();
+    submitForm();
+
+    expect(buttonByText('+ New Task').disabled).toBe(true);
+    expect(kebabButton().disabled).toBe(true);
+
+    httpMock.expectOne('/api/tasks').flush({ ...fixtureTask({ id: 'new-1' }) });
+    await flushMacrotask();
+    fixture.detectChanges();
+  });
+
+  it('shows a delete confirmation naming the task, deletes on accept, and restores focus to New Task', async () => {
+    await boardReady([fixtureTask({ id: 't-1', title: 'Design homepage' })]);
+    const trigger = kebabButton();
+
+    clickMenuItem('Delete');
+
+    // ConfirmDialog's default appendTo is 'body' (unlike Dialog/Menu's 'self'), so its content
+    // is appended to document.body, not inside fixture.nativeElement.
+    const confirmRoot: HTMLElement = document.querySelector('.p-confirmdialog')!;
+    expect(confirmRoot.textContent).toContain('Design homepage');
+
+    const acceptButton: HTMLButtonElement = confirmRoot.querySelector(
+      '.p-confirmdialog-accept-button',
+    )!;
+    acceptButton.click();
+    fixture.detectChanges();
+    // Lets ConfirmDialog's own close teardown (it removes the accept button
+    // we just clicked from the DOM) fully settle before the deletion
+    // resolves, so its cleanup can't race our own focus restoration below.
+    await flushMacrotask();
+    fixture.detectChanges();
+
+    const req = httpMock.expectOne('/api/tasks/t-1');
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null);
+    await flushMacrotask();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelectorAll('app-task-card').length).toBe(0);
+    // The deleted card's kebab button no longer exists — focus falls back to New Task.
+    expect(trigger.isConnected).toBe(false);
+    expect(document.activeElement).toBe(buttonByText('+ New Task'));
+  });
+
+  it('shows a board-level banner and restores focus to the kebab on a failed delete', async () => {
+    await boardReady([fixtureTask({ id: 't-1', title: 'Design homepage' })]);
+    const trigger = kebabButton();
+
+    clickMenuItem('Delete');
+    const acceptButton: HTMLButtonElement = document.querySelector(
+      '.p-confirmdialog-accept-button',
+    )!;
+    acceptButton.click();
+    fixture.detectChanges();
+    await flushMacrotask();
+    fixture.detectChanges();
+
+    httpMock.expectOne('/api/tasks/t-1').flush('boom', { status: 500, statusText: 'Server Error' });
+    await flushMacrotask();
+    fixture.detectChanges();
+
+    const banner = fixture.nativeElement.querySelector('[role="alert"]');
+    expect(banner?.textContent).toContain('Something went wrong (500)');
+    expect(fixture.nativeElement.querySelectorAll('app-task-card').length).toBe(1);
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it('cancelling the confirmation restores focus to the kebab without deleting', async () => {
+    await boardReady([fixtureTask({ id: 't-1' })]);
+    const trigger = kebabButton();
+
+    clickMenuItem('Delete');
+    const confirmRoot: HTMLElement = document.querySelector('.p-confirmdialog')!;
+    const rejectButton: HTMLButtonElement = confirmRoot.querySelector(
+      '.p-confirmdialog-reject-button',
+    )!;
+    rejectButton.click();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelectorAll('app-task-card').length).toBe(1);
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it('restores focus to the kebab that opened Edit after Cancel', async () => {
+    await boardReady([fixtureTask({ id: 't-1' })]);
+    const trigger = kebabButton();
+
+    clickMenuItem('Edit');
+    buttonByText('Cancel').click();
+    fixture.detectChanges();
+
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it('restores focus to the New Task button after cancelling create', async () => {
+    await boardReady([]);
+    const button = buttonByText('+ New Task');
+
+    button.click();
+    fixture.detectChanges();
+    buttonByText('Cancel').click();
+    fixture.detectChanges();
+
+    expect(document.activeElement).toBe(button);
+  });
 });

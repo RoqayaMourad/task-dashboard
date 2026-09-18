@@ -6,9 +6,38 @@
   [class.border-overdue]="overdue()"
   [class.border-l-4]="overdue()"
 >
-  <span class="rounded px-2 py-1 text-[11px] font-bold uppercase" [class]="priorityClass()">
-    {{ task().priority }}
-  </span>
+  <div class="flex items-start justify-between gap-2">
+    <span class="rounded px-2 py-1 text-[11px] font-bold uppercase" [class]="priorityClass()">
+      {{ task().priority }}
+    </span>
+
+    <div class="relative">
+      <button
+        #kebabButton
+        type="button"
+        class="rounded p-1 text-slate-400 hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
+        aria-haspopup="menu"
+        [attr.aria-controls]="menuId()"
+        [attr.aria-expanded]="menuOpen()"
+        [attr.aria-label]="'Actions for ' + task().title"
+        [disabled]="mutationPending()"
+        (click)="onKebabClick($event)"
+      >
+        <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor" aria-hidden="true">
+          <circle cx="12" cy="5" r="1.8" />
+          <circle cx="12" cy="12" r="1.8" />
+          <circle cx="12" cy="19" r="1.8" />
+        </svg>
+      </button>
+      <p-menu
+        [id]="menuId()"
+        [model]="menuItems()"
+        [popup]="true"
+        (onShow)="menuOpen.set(true)"
+        (onHide)="menuOpen.set(false)"
+      />
+    </div>
+  </div>
 
   <h3 class="mt-2 text-sm font-bold text-text-heading">{{ task().title }}</h3>
   <p class="mt-1 text-xs text-text-muted">{{ task().description }}</p>
