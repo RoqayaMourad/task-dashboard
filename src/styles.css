@@ -4,30 +4,51 @@
  * Semantic design tokens (Tailwind v4 CSS-first `@theme`, no tailwind.config.js).
  * Only values that recur with business meaning across unrelated components
  * (badges, buttons, nav, stat icons, hover rings, accent bars) are promoted
- * here. Neutrals, spacing, radii, and font sizes stay on Tailwind's default
- * scale, which already matches the design screenshots.
+ * here. Spacing and font sizes stay on Tailwind's default scale.
  *
  * Kept semantically separate even where hues currently overlap (--color-primary
  * vs --color-status-todo; --color-priority-low vs --color-status-done), so a
  * future rebrand of one doesn't silently affect the other.
+ *
+ * Values below are corrected against the inspected Figma source of truth
+ * (Design Fidelity Correction phase) — exact hex, not Tailwind-palette
+ * approximations. `--color-status-todo`/`--color-status-in-progress` are left
+ * on their original Tailwind approximation: the Figma inspection only sampled
+ * one task-card hover variant (overdue/red) in detail, so those two hues
+ * were never directly re-verified.
  */
 @theme {
   /* Brand */
-  --color-primary: var(--color-blue-600);
-  --color-primary-hover: var(--color-blue-700);
+  --color-primary: #1976d2;
+  --color-primary-hover: #1565c0;
 
   /* Board status — column accents + card hover ring */
   --color-status-todo: var(--color-blue-500);
   --color-status-in-progress: var(--color-amber-500);
-  --color-status-done: var(--color-green-500);
+  --color-status-done: #388e3c;
 
   /* Task priority — badges, filters */
-  --color-priority-high: var(--color-red-600);
-  --color-priority-medium: var(--color-amber-600);
-  --color-priority-low: var(--color-emerald-600);
+  --color-priority-high: #d32f2f;
+  --color-priority-medium: #f57c00;
+  --color-priority-low: #388e3c;
 
   /* Due-date state — independent of priority/status, overrides hover ring */
-  --color-overdue: var(--color-red-600);
+  --color-overdue: #d32f2f;
+
+  /*
+   * Neutral text/border roles. Figma's neutral scale is true grey, not
+   * Tailwind's blue-tinted `slate` — these are additive tokens for future
+   * (Phase 12+) components to opt into; existing `slate-*` usage in the
+   * already-built shell/placeholder pages is intentionally left alone here
+   * (see Design Fidelity Correction phase notes — not an unrelated rewrite).
+   */
+  --color-text-heading: #212121;
+  --color-text-muted: #757575;
+  --color-border: #e0e0e0;
+
+  /* Recurring shadows observed in Figma */
+  --shadow-chrome: 0px 2px 2px rgba(0, 0, 0, 0.08);
+  --shadow-card: 0px 4px 4px rgba(0, 0, 0, 0.12);
 }
 
 @layer base {
