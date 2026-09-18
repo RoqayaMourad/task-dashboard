@@ -35,7 +35,6 @@
     <select
       id="assignee-filter"
       class="rounded border border-border px-3 py-2 text-sm text-text-heading"
-      [value]="assigneeFilter()"
       [disabled]="assigneeOptionsStatus() === 'loading' || assigneeOptionsStatus() === 'error'"
       (change)="assigneeFilterChange.emit($any($event.target).value)"
     >
@@ -47,9 +46,11 @@
           <option value="all">Assignees unavailable</option>
         }
         @default {
-          <option value="all">All Assignees</option>
+          <option value="all" [selected]="assigneeFilter() === 'all'">All Assignees</option>
           @for (assignee of assigneeOptions(); track assignee.id) {
-            <option [value]="assignee.id">{{ assignee.name }}</option>
+            <option [value]="assignee.id" [selected]="assignee.id === assigneeFilter()">
+              {{ assignee.name }}
+            </option>
           }
         }
       }

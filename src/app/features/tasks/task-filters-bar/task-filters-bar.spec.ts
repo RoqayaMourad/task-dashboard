@@ -99,6 +99,13 @@ describe('TaskFiltersBar', () => {
     expect(select.textContent).toContain('unavailable');
   });
 
+  it('selects the matching option when created with a persisted non-default assignee filter', () => {
+    const fixture = createComponent({ assigneeFilter: 'user-002' });
+    const select: HTMLSelectElement = fixture.nativeElement.querySelector('#assignee-filter');
+
+    expect(select.value).toBe('user-002');
+  });
+
   it('renders the New Task trigger as genuinely disabled, not fake-interactive', () => {
     const fixture = createComponent();
     const button: HTMLButtonElement = fixture.nativeElement.querySelector(

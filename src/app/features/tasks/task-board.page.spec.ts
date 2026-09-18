@@ -162,6 +162,33 @@ describe('TaskBoardPage', () => {
     expect(fixture.nativeElement.querySelectorAll('app-task-card').length).toBe(1);
   });
 
+  it('reflects a persisted assignee filter in the select after the page is recreated (navigate away and back)', async () => {
+    fixture.detectChanges();
+    await flushMacrotask();
+    await flushTasks([
+      fixtureTask({ id: 't-1', assignee }),
+      fixtureTask({ id: 't-2', assignee: assignee2 }),
+    ]);
+    await flushUsers();
+    fixture.detectChanges();
+
+    const taskStore = TestBed.inject(TaskStore);
+    taskStore.assigneeFilter.set(assignee2.id);
+    fixture.detectChanges();
+
+    // Simulates leaving /tasks and coming back: the routed page is destroyed
+    // and a fresh instance created, while TaskStore/UserService (root
+    // singletons) keep their already-resolved state, exactly as Shell's
+    // router-outlet activate/deactivate cycle does in the real app.
+    fixture.destroy();
+    const fixture2 = TestBed.createComponent(TaskBoardPage);
+    fixture2.detectChanges();
+
+    const select: HTMLSelectElement = fixture2.nativeElement.querySelector('#assignee-filter');
+    expect(select.value).toBe(assignee2.id);
+    expect(fixture2.nativeElement.querySelectorAll('app-task-card').length).toBe(1);
+  });
+
   it('filters the board by title/description when setSearchTerm() updates TaskStore', async () => {
     fixture.detectChanges();
     await flushMacrotask();
