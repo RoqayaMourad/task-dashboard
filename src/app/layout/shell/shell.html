@@ -1,0 +1,19 @@
+<div class="flex min-h-dvh flex-col bg-slate-50">
+  <app-topbar [sidebarOpen]="sidebarOpen()" (toggleSidebar)="toggleSidebar()" />
+
+  <div class="flex flex-1">
+    <app-sidebar [open]="sidebarOpen()" (navigated)="closeSidebar()" />
+
+    @if (sidebarOpen()) {
+      <div
+        class="fixed inset-0 z-30 bg-black/50 lg:hidden"
+        aria-hidden="true"
+        (click)="closeSidebar()"
+      ></div>
+    }
+
+    <main class="min-w-0 flex-1 p-4 lg:p-6">
+      <router-outlet />
+    </main>
+  </div>
+</div>
