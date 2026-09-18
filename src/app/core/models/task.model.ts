@@ -17,12 +17,6 @@ export interface Task {
   priority: TaskPriority;
   /** Date-only, `YYYY-MM-DD` — distinct format from the ISO datetime fields below. */
   dueDate: string;
-  /**
-   * Present (and only ever `true`) on some overdue seed tasks; absent, not
-   * `false`, otherwise. Not derived by the supplied generator from any live
-   * date comparison — treat as an unreliable hint, not a source of truth.
-   */
-  isOverdue?: boolean;
   /** ISO datetime, present only when `status === 'done'`. */
   completedAt?: string;
   assignee: Assignee;
@@ -30,3 +24,20 @@ export interface Task {
   createdAt: string;
   updatedAt: string;
 }
+
+/**
+ * Fields a user actually provides when creating a task. Excludes `id`
+ * (assigned by json-server), `createdAt`/`updatedAt`/`completedAt` (stamped
+ * by TaskStore — json-server has no business logic of its own to do this).
+ */
+export interface CreateTaskInput {
+  title: string;
+  description: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+  dueDate: string;
+  assignee: Assignee;
+  tags: string[];
+}
+
+export type UpdateTaskInput = Partial<CreateTaskInput>;
