@@ -1,0 +1,60 @@
+<h1 class="text-2xl font-bold text-text-heading">Analytics</h1>
+<p class="mt-2 text-sm text-text-muted">Task distribution by priority and status.</p>
+
+<section class="mt-6" aria-labelledby="charts-heading">
+  <div class="flex items-center justify-between">
+    <h2 id="charts-heading" class="sr-only">Task distribution charts</h2>
+    @if (taskDataStatus() === 'error') {
+      <button
+        type="button"
+        (click)="retryTaskData()"
+        aria-label="Retry loading task distribution charts"
+        class="text-sm font-semibold text-primary hover:text-primary-hover"
+      >
+        Retry
+      </button>
+    }
+  </div>
+
+  <div class="mt-4">
+    @if (chartsSkeleton()) {
+      <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        @for (i of [0, 1]; track i) {
+          <div class="h-96 animate-pulse rounded-lg bg-white p-6 shadow-card">
+            <div class="h-5 w-32 rounded bg-slate-200"></div>
+            <div class="mt-6 h-64 rounded bg-slate-200"></div>
+          </div>
+        }
+      </div>
+    } @else if (taskDataStatus() === 'error') {
+      <p role="alert" class="text-sm text-change-negative">Couldn't load task distribution.</p>
+    } @else if (!hasTasks()) {
+      <p class="rounded-lg bg-white p-6 text-sm text-text-muted shadow-card">
+        No tasks yet — charts will appear once tasks exist.
+      </p>
+    } @else {
+      <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div class="rounded-lg bg-white p-6 shadow-card">
+          <h3 class="text-base font-semibold text-text-heading">Priority distribution</h3>
+          <app-task-distribution-chart
+            class="mt-4 block h-64"
+            type="bar"
+            [data]="priorityData()"
+            [colorVars]="priorityColorVars"
+            ariaLabel="Task count by priority"
+          />
+        </div>
+        <div class="rounded-lg bg-white p-6 shadow-card">
+          <h3 class="text-base font-semibold text-text-heading">Status distribution</h3>
+          <app-task-distribution-chart
+            class="mt-4 block h-64"
+            type="doughnut"
+            [data]="statusData()"
+            [colorVars]="statusColorVars"
+            ariaLabel="Task count by status"
+          />
+        </div>
+      </div>
+    }
+  </div>
+</section>

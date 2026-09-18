@@ -5,6 +5,32 @@ import { Statistic } from '../../core/models/statistic.model';
 import { Task } from '../../core/models/task.model';
 import { DashboardPage } from './dashboard.page';
 
+// jsdom has no real canvas 2D context — mock the Chart.js boundary so the
+// distribution charts render without exercising canvas internals. See
+// shared/task-distribution-chart/task-distribution-chart.spec.ts for the
+// component's own dedicated tests.
+vi.mock('chart.js', () => {
+  class MockChart {
+    static register = vi.fn();
+    destroy = vi.fn();
+    constructor(
+      public canvas: unknown,
+      public config: unknown,
+    ) {}
+  }
+  return {
+    Chart: MockChart,
+    BarController: {},
+    DoughnutController: {},
+    BarElement: {},
+    ArcElement: {},
+    CategoryScale: {},
+    LinearScale: {},
+    Tooltip: {},
+    Legend: {},
+  };
+});
+
 function flushMacrotask(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 0));
 }
@@ -213,7 +239,7 @@ describe('DashboardPage', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Design homepage');
 
-    fixture.componentInstance.retryActivity();
+    fixture.componentInstance.retryTaskData();
     await flushMacrotask();
     fixture.detectChanges();
 
@@ -231,5 +257,76 @@ describe('DashboardPage', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('No recent activity');
+  });
+
+  function chartsSkeletonCount(): number {
+    return fixture.nativeElement.querySelectorAll(
+      'section[aria-labelledby="charts-heading"] .animate-pulse',
+    ).length;
+  }
+
+  it('shows a charts skeleton while tasks are loading, then both charts once resolved', async () => {
+    fixture.detectChanges();
+    await flushMacrotask();
+    await flushStatistics();
+    fixture.detectChanges();
+
+    expect(chartsSkeletonCount()).toBeGreaterThan(0);
+
+    await flushTasks([fixtureTask({ priority: 'high' }), fixtureTask({ priority: 'low' })]);
+    fixture.detectChanges();
+
+    expect(chartsSkeletonCount()).toBe(0);
+    const charts = fixture.nativeElement.querySelectorAll('app-task-distribution-chart');
+    expect(charts.length).toBe(2);
+  });
+
+  it('shows a charts error with retry, sharing the same retry as Recent Activity', async () => {
+    fixture.detectChanges();
+    await flushMacrotask();
+    await flushStatistics();
+    await failTasks();
+    fixture.detectChanges();
+
+    const alert = fixture.nativeElement.querySelector(
+      'section[aria-labelledby="charts-heading"] [role="alert"]',
+    );
+    expect(alert).toBeTruthy();
+
+    const retryButton: HTMLButtonElement = fixture.nativeElement.querySelector(
+      '[aria-label="Retry loading task distribution charts"]',
+    );
+    retryButton.click();
+    await flushMacrotask();
+
+    await flushTasks([fixtureTask()]);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelectorAll('app-task-distribution-chart').length).toBe(2);
+  });
+
+  it('shows an empty-charts message instead of all-zero charts when there are no tasks', async () => {
+    fixture.detectChanges();
+    await flushMacrotask();
+    await flushStatistics();
+    await flushTasks([]);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('No tasks yet');
+    expect(fixture.nativeElement.querySelectorAll('app-task-distribution-chart').length).toBe(0);
+  });
+
+  it('keeps the distribution charts compact (sr-only text breakdown, per the accessibility refinement)', async () => {
+    fixture.detectChanges();
+    await flushMacrotask();
+    await flushStatistics();
+    await flushTasks([fixtureTask()]);
+    fixture.detectChanges();
+
+    const breakdowns: HTMLElement[] = Array.from(
+      fixture.nativeElement.querySelectorAll('app-task-distribution-chart ul'),
+    );
+    expect(breakdowns.length).toBe(2);
+    expect(breakdowns.every((ul) => ul.classList.contains('sr-only'))).toBe(true);
   });
 });

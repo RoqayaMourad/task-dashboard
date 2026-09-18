@@ -37,10 +37,10 @@
 <section class="mt-8 rounded-lg bg-white p-6 shadow-card" aria-labelledby="activity-heading">
   <div class="flex items-center justify-between">
     <h2 id="activity-heading" class="text-lg font-semibold text-text-heading">Recent Activity</h2>
-    @if (activityStatus() === 'error') {
+    @if (taskDataStatus() === 'error') {
       <button
         type="button"
-        (click)="retryActivity()"
+        (click)="retryTaskData()"
         aria-label="Retry loading recent activity"
         class="text-sm font-semibold text-primary hover:text-primary-hover"
       >
@@ -59,10 +59,70 @@
           </li>
         }
       </ul>
-    } @else if (activityStatus() === 'error') {
+    } @else if (taskDataStatus() === 'error') {
       <p class="text-sm text-change-negative">Couldn't load recent activity.</p>
     } @else {
       <app-activity-feed [items]="recentActivity()" />
+    }
+  </div>
+</section>
+
+<section class="mt-8" aria-labelledby="charts-heading">
+  <div class="flex items-center justify-between">
+    <h2 id="charts-heading" class="text-lg font-semibold text-text-heading">Task Distribution</h2>
+    @if (taskDataStatus() === 'error') {
+      <button
+        type="button"
+        (click)="retryTaskData()"
+        aria-label="Retry loading task distribution charts"
+        class="text-sm font-semibold text-primary hover:text-primary-hover"
+      >
+        Retry
+      </button>
+    }
+  </div>
+
+  <div class="mt-4">
+    @if (chartsSkeleton()) {
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        @for (i of [0, 1]; track i) {
+          <div class="h-48 animate-pulse rounded-lg bg-white p-4 shadow-card">
+            <div class="h-4 w-32 rounded bg-slate-200"></div>
+            <div class="mt-4 h-28 rounded bg-slate-200"></div>
+          </div>
+        }
+      </div>
+    } @else if (taskDataStatus() === 'error') {
+      <p role="alert" class="text-sm text-change-negative">Couldn't load task distribution.</p>
+    } @else if (!hasTasks()) {
+      <p class="rounded-lg bg-white p-6 text-sm text-text-muted shadow-card">
+        No tasks yet — charts will appear once tasks exist.
+      </p>
+    } @else {
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <div class="h-48 rounded-lg bg-white p-4 shadow-card">
+          <h3 class="text-sm font-semibold text-text-heading">Priority</h3>
+          <app-task-distribution-chart
+            class="mt-2 block h-32"
+            type="bar"
+            [data]="priorityData()"
+            [colorVars]="priorityColorVars"
+            ariaLabel="Task count by priority"
+            [compact]="true"
+          />
+        </div>
+        <div class="h-48 rounded-lg bg-white p-4 shadow-card">
+          <h3 class="text-sm font-semibold text-text-heading">Status</h3>
+          <app-task-distribution-chart
+            class="mt-2 block h-32"
+            type="doughnut"
+            [data]="statusData()"
+            [colorVars]="statusColorVars"
+            ariaLabel="Task count by status"
+            [compact]="true"
+          />
+        </div>
+      </div>
     }
   </div>
 </section>
