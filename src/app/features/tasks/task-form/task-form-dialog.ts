@@ -133,12 +133,18 @@ export class TaskFormDialog {
     }
     this.tagsArray.push(new FormControl(value, { nonNullable: true }));
     this.tagsArray.updateValueAndValidity();
+    // A disabled Save button never fires (ngSubmit), so onSubmit()'s
+    // markAllAsTouched() never runs while a duplicate/blank tag is exactly
+    // what's keeping it disabled — mark touched right on the action that
+    // could introduce the problem instead.
+    this.tagsArray.markAsTouched();
     this.newTagValue.set('');
   }
 
   protected removeTag(index: number): void {
     this.tagsArray.removeAt(index);
     this.tagsArray.updateValueAndValidity();
+    this.tagsArray.markAsTouched();
   }
 
   protected fieldInvalid(

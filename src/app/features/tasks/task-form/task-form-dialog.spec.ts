@@ -157,6 +157,48 @@ describe('TaskFormDialog', () => {
     expect(submitButton().disabled).toBe(true);
   });
 
+  it('shows an accessible duplicate-tag message as soon as the duplicate is added, without requiring submit', () => {
+    open({ mode: 'edit', task: fixtureTask({ tags: ['Backend'] }) });
+    const newTagInput = field<HTMLInputElement>('#task-new-tag');
+    const addButton = Array.from(fixture.nativeElement.querySelectorAll('button')).find(
+      (b): b is HTMLButtonElement => (b as HTMLButtonElement).textContent?.trim() === 'Add',
+    )!;
+
+    newTagInput.value = 'backend';
+    newTagInput.dispatchEvent(new Event('input'));
+    addButton.click();
+    fixture.detectChanges();
+
+    // Save is disabled at this point, so it never fires — the message must
+    // not depend on onSubmit()'s markAllAsTouched() ever running.
+    expect(submitButton().disabled).toBe(true);
+
+    const message = fixture.nativeElement.querySelector('#task-tags-error');
+    expect(message?.textContent).toContain('unique');
+    expect(message?.getAttribute('role')).toBe('alert');
+    expect(newTagInput.getAttribute('aria-describedby')).toBe('task-tags-error');
+    expect(newTagInput.getAttribute('aria-invalid')).toBe('true');
+  });
+
+  it('clears the duplicate-tag message once the duplicate is removed', () => {
+    open({ mode: 'edit', task: fixtureTask({ tags: ['Backend'] }) });
+    const newTagInput = field<HTMLInputElement>('#task-new-tag');
+    const addButton = Array.from(fixture.nativeElement.querySelectorAll('button')).find(
+      (b): b is HTMLButtonElement => (b as HTMLButtonElement).textContent?.trim() === 'Add',
+    )!;
+    newTagInput.value = 'backend';
+    newTagInput.dispatchEvent(new Event('input'));
+    addButton.click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#task-tags-error')).not.toBeNull();
+
+    const removeButton = field<HTMLButtonElement>('[aria-label="Remove tag backend"]');
+    removeButton.click();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('#task-tags-error')).toBeNull();
+  });
+
   it('does not flag a prefilled assignee as missing while options are still loading, even once touched', () => {
     open({
       mode: 'edit',

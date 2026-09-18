@@ -172,6 +172,8 @@
             (input)="newTagValue.set($any($event.target).value)"
             (keydown.enter)="$event.preventDefault(); addTag()"
             class="flex-1 rounded border border-border px-3 py-2 text-sm"
+            [attr.aria-invalid]="tagsInvalid()"
+            [attr.aria-describedby]="tagsInvalid() ? 'task-tags-error' : null"
           />
           <button
             type="button"
@@ -182,7 +184,9 @@
           </button>
         </div>
         @if (tagsInvalid()) {
-          <p class="mt-1 text-xs text-change-negative">{{ tagsErrorMessage() }}</p>
+          <p id="task-tags-error" role="alert" class="mt-1 text-xs text-change-negative">
+            {{ tagsErrorMessage() }}
+          </p>
         }
       </div>
 

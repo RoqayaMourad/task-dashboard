@@ -139,4 +139,21 @@ describe('TaskCard', () => {
 
     expect(kebabButton(fixture).disabled).toBe(true);
   });
+
+  it('does not wrap the kebab/menu in a CSS-positioned ancestor', () => {
+    // PrimeNG Menu computes its popup's top/left as document-origin-relative
+    // pixel offsets (absolutePosition() in @primeuix/utils), assuming no
+    // intermediate `position: relative/absolute/fixed` ancestor between the
+    // trigger and the document root. Such an ancestor becomes the popup's
+    // offsetParent instead, making it render far from the trigger (a real
+    // bug caught in manual QA — the culprit was a `class="relative"` on the
+    // kebab's own wrapper).
+    const fixture = createComponent(fixtureTask());
+    let node: HTMLElement | null = kebabButton(fixture).parentElement;
+
+    while (node && node !== fixture.nativeElement) {
+      expect(node.className).not.toMatch(/\b(relative|absolute|fixed|sticky)\b/);
+      node = node.parentElement;
+    }
+  });
 });
