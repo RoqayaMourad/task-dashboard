@@ -66,6 +66,16 @@ describe('Shell', () => {
     expect(backdrop()).not.toBeNull();
   });
 
+  it('should do nothing on Escape when the sidebar is already closed', async () => {
+    const { fixture, panel } = await setup();
+    expect(panel().classList.contains('hidden')).toBe(true);
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    fixture.detectChanges();
+
+    expect(panel().classList.contains('hidden')).toBe(true);
+  });
+
   it('should close on Escape and return focus to the toggle button', async () => {
     const { fixture, toggleButton, panel } = await setup();
     toggleButton.click();
@@ -73,6 +83,20 @@ describe('Shell', () => {
     expect(panel().classList.contains('flex')).toBe(true);
 
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    fixture.detectChanges();
+
+    expect(panel().classList.contains('hidden')).toBe(true);
+    expect(document.activeElement).toBe(toggleButton);
+  });
+
+  it('should close when the toggle button is clicked again while open', async () => {
+    const { fixture, toggleButton, panel } = await setup();
+
+    toggleButton.click();
+    fixture.detectChanges();
+    expect(panel().classList.contains('flex')).toBe(true);
+
+    toggleButton.click();
     fixture.detectChanges();
 
     expect(panel().classList.contains('hidden')).toBe(true);

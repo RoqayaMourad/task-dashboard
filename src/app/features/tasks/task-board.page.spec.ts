@@ -370,6 +370,37 @@ describe('TaskBoardPage', () => {
     fixture.detectChanges();
   });
 
+  it('ignores Edit/Delete triggers while a mutation is already pending (defense-in-depth behind the disabled UI)', async () => {
+    await boardReady([fixtureTask({ id: 't-1' })]);
+    const trigger = kebabButton();
+
+    buttonByText('+ New Task').click();
+    fixture.detectChanges();
+    fillValidTaskForm();
+    submitForm();
+    expect(TestBed.inject(TaskStore).mutationPending()).toBe(true);
+
+    // Bypasses the disabled kebab/menu UI to exercise the component's own
+    // state guard directly, in case either handler is ever reachable by a
+    // route other than the (already-disabled) menu — e.g. a future
+    // keyboard shortcut.
+    const board = fixture.componentInstance as unknown as {
+      openEditForm(event: { task: Task; trigger: HTMLElement }): void;
+      confirmDelete(event: { task: Task; trigger: HTMLElement }): void;
+    };
+    board.openEditForm({ task: fixtureTask({ id: 't-1' }), trigger });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).not.toContain('Edit Task');
+
+    board.confirmDelete({ task: fixtureTask({ id: 't-1' }), trigger });
+    fixture.detectChanges();
+    expect(document.querySelector('.p-confirmdialog')).toBeNull();
+
+    httpMock.expectOne('/api/tasks').flush({ ...fixtureTask({ id: 'new-1' }) });
+    await flushMacrotask();
+    fixture.detectChanges();
+  });
+
   it('shows a delete confirmation naming the task, deletes on accept, and restores focus to New Task', async () => {
     await boardReady([fixtureTask({ id: 't-1', title: 'Design homepage' })]);
     const trigger = kebabButton();

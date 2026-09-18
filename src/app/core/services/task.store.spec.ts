@@ -1,4 +1,5 @@
 import {
+  HttpClient,
   HttpErrorResponse,
   HttpResponse,
   provideHttpClient,
@@ -6,6 +7,7 @@ import {
 } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { throwError } from 'rxjs';
 import { Task } from '../models/task.model';
 import { HttpCache } from '../http/http-cache';
 import { cacheInterceptor } from '../http/cache.interceptor';
@@ -173,6 +175,24 @@ describe('TaskStore', () => {
       await expect(store.update('missing', { title: 'x' })).rejects.toThrow();
       httpMock.expectNone({ url: '/api/tasks/missing', method: 'PATCH' });
     });
+
+    it('reconciles only the updated task, leaving every other task in the collection untouched', async () => {
+      await setupWithInitialTasks([
+        fixtureTask({ id: 't-1', title: 'Design homepage' }),
+        fixtureTask({ id: 't-2', title: 'Ship release' }),
+      ]);
+
+      const promise = store.update('t-1', { title: 'Design new homepage' });
+      httpMock
+        .expectOne({ url: '/api/tasks/t-1', method: 'PATCH' })
+        .flush(fixtureTask({ id: 't-1', title: 'Design new homepage' }));
+      await promise;
+
+      expect(store.tasks().map((t) => [t.id, t.title])).toEqual([
+        ['t-1', 'Design new homepage'],
+        ['t-2', 'Ship release'],
+      ]);
+    });
   });
 
   describe('remove', () => {
@@ -196,6 +216,18 @@ describe('TaskStore', () => {
       expect(store.tasks().find((t) => t.id === 't-1')?.title).toBe('Design homepage');
       expect(store.mutationError()).toBeInstanceOf(HttpErrorResponse);
       expect((store.mutationError() as HttpErrorResponse).status).toBe(500);
+      expect(store.mutationPending()).toBe(false);
+    });
+
+    it('normalizes a non-Error rejection (never thrown by this app today, but not part of its type contract) into a real Error', async () => {
+      await setupWithInitialTasks([fixtureTask({ id: 't-1' })]);
+      vi.spyOn(TestBed.inject(HttpClient), 'patch').mockReturnValue(throwError(() => 'boom'));
+
+      await expect(store.update('t-1', { title: 'x' })).rejects.toBe('boom');
+
+      expect(store.mutationError()).toBeInstanceOf(Error);
+      expect(store.mutationError()).not.toBeInstanceOf(HttpErrorResponse);
+      expect((store.mutationError() as Error).message).toBe('boom');
       expect(store.mutationPending()).toBe(false);
     });
 

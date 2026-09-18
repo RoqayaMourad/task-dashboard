@@ -1,5 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { Dialog } from 'primeng/dialog';
 import { Assignee, CreateTaskInput, Task } from '../../../core/models/task.model';
 import { TaskFormDialog } from './task-form-dialog';
 
@@ -135,6 +137,31 @@ describe('TaskFormDialog', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent as string).not.toContain('Backend');
+  });
+
+  it('does nothing when Add is clicked with a blank tag input', () => {
+    open({ mode: 'create' });
+    const addButton = Array.from(fixture.nativeElement.querySelectorAll('button')).find(
+      (b): b is HTMLButtonElement => (b as HTMLButtonElement).textContent?.trim() === 'Add',
+    )!;
+
+    addButton.click();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelectorAll('[role="listitem"]').length).toBe(0);
+  });
+
+  it('flags a blank tag carried over from existing task data (not addable through the UI itself) as invalid', () => {
+    open({ mode: 'edit', task: fixtureTask({ tags: ['Backend', ''] }) });
+    expect(submitButton().disabled).toBe(true);
+
+    // Nothing marks the tags array touched on load — surface the message the
+    // same way a real submit attempt would (native submit, e.g. Enter key).
+    field<HTMLFormElement>('form').dispatchEvent(new Event('submit', { cancelable: true }));
+    fixture.detectChanges();
+
+    const message = fixture.nativeElement.querySelector('#task-tags-error');
+    expect(message?.textContent).toContain('blank');
   });
 
   it('rejects a duplicate tag at the FormArray level', () => {
@@ -280,6 +307,42 @@ describe('TaskFormDialog', () => {
     cancelButton.click();
 
     expect(dismissed).toHaveBeenCalledTimes(1);
+  });
+
+  it('emits dismissed when the dialog reports closing while idle (e.g. Escape or the close icon)', () => {
+    open({ mode: 'create' });
+    const dismissed = vi.fn();
+    fixture.componentInstance.dismissed.subscribe(dismissed);
+
+    const dialog = fixture.debugElement.query(By.directive(Dialog)).componentInstance as Dialog;
+    dialog.visibleChange.emit(false);
+
+    expect(dismissed).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not emit dismissed when the dialog reports closing while a mutation is pending', () => {
+    open({ mode: 'create', pending: true });
+    const dismissed = vi.fn();
+    fixture.componentInstance.dismissed.subscribe(dismissed);
+
+    const dialog = fixture.debugElement.query(By.directive(Dialog)).componentInstance as Dialog;
+    dialog.visibleChange.emit(false);
+
+    expect(dismissed).not.toHaveBeenCalled();
+  });
+
+  it('ignores a native form submit (e.g. Enter key, which bypasses the disabled Save button) while invalid', () => {
+    open({ mode: 'create' });
+    const emitted = vi.fn();
+    fixture.componentInstance.save.subscribe(emitted);
+    expect(submitButton().disabled).toBe(true);
+
+    field<HTMLFormElement>('form').dispatchEvent(new Event('submit', { cancelable: true }));
+    fixture.detectChanges();
+
+    expect(emitted).not.toHaveBeenCalled();
+    // markAllAsTouched() still ran, so the now-invalid fields surface their errors.
+    expect(field<HTMLInputElement>('#task-title').getAttribute('aria-invalid')).toBe('true');
   });
 
   it('shows the mutation error message inline when error is set', () => {
