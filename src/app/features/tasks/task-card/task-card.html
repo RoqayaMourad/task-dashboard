@@ -1,0 +1,37 @@
+<div
+  class="rounded-lg border p-4 shadow-chrome"
+  [class.bg-white]="!overdue()"
+  [class.border-border]="!overdue()"
+  [class.bg-overdue-bg]="overdue()"
+  [class.border-overdue]="overdue()"
+  [class.border-l-4]="overdue()"
+>
+  <span class="rounded px-2 py-1 text-[11px] font-bold uppercase" [class]="priorityClass()">
+    {{ task().priority }}
+  </span>
+
+  <h3 class="mt-2 text-sm font-bold text-text-heading">{{ task().title }}</h3>
+  <p class="mt-1 text-xs text-text-muted">{{ task().description }}</p>
+
+  <p class="mt-2 text-xs text-text-muted">
+    <span aria-hidden="true">{{ metaIcon() }}</span>
+    {{ dueLabel() }}
+  </p>
+
+  @if (task().tags.length > 0) {
+    <p class="mt-1 text-xs text-text-muted">{{ task().tags[0] }}</p>
+  }
+
+  <div
+    class="mt-3 flex items-center gap-2 border-t border-border pt-3"
+    [attr.aria-label]="'Assigned to ' + task().assignee.name"
+  >
+    <span
+      class="flex size-6 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white"
+      aria-hidden="true"
+    >
+      {{ task().assignee.avatar }}
+    </span>
+    <span class="text-xs text-text-heading" aria-hidden="true">&#64;{{ firstName() }}</span>
+  </div>
+</div>

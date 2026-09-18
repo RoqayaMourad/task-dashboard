@@ -32,8 +32,18 @@
   --color-priority-medium: #f57c00;
   --color-priority-low: #388e3c;
 
+  /*
+   * Priority chip backgrounds (Phase 13, TaskCard). Figma's sampled fill for
+   * the Low chip is the same pink as High's, not a green tint — reproduced
+   * verbatim rather than "corrected" to match its text color.
+   */
+  --color-priority-high-bg: #ffebee;
+  --color-priority-medium-bg: #fff3e0;
+  --color-priority-low-bg: #ffebee;
+
   /* Due-date state — independent of priority/status, overrides hover ring */
   --color-overdue: #d32f2f;
+  --color-overdue-bg: #ffebee;
 
   /*
    * Dashboard stat-card trend direction (Statistic.changeType). Currently

@@ -1,13 +1,60 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { TaskStore } from '../../core/services/task.store';
+import { UserService } from '../../core/services/user.service';
+import { TaskStatus } from '../../core/models/task.model';
+import { TaskColumn } from './task-column/task-column';
+import { TaskFiltersBar } from './task-filters-bar/task-filters-bar';
 
+const COLUMNS: ReadonlyArray<{ status: TaskStatus; label: string }> = [
+  { status: 'todo', label: 'To Do' },
+  { status: 'in_progress', label: 'In Progress' },
+  { status: 'done', label: 'Done' },
+];
+
+/**
+ * Smart/container. Read-only this increment: filtering only, no search
+ * (Increment 2) and no create/edit/delete (Increment 3) — the "+ New Task"
+ * trigger and each card's kebab menu stay genuinely disabled/absent rather
+ * than fake-interactive.
+ */
 @Component({
   selector: 'app-task-board-page',
-  template: `
-    <h1 class="text-2xl font-bold text-slate-900">Tasks</h1>
-    <p class="mt-2 text-sm text-slate-500">
-      The Kanban board, filters, search, and task CRUD arrive in Phase 13.
-    </p>
-  `,
+  imports: [TaskColumn, TaskFiltersBar],
+  templateUrl: './task-board.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TaskBoardPage {}
+export class TaskBoardPage {
+  private readonly taskStore = inject(TaskStore);
+  private readonly userService = inject(UserService);
+
+  protected readonly columns = COLUMNS;
+
+  protected readonly taskStatus = this.taskStore.status;
+  protected readonly tasksByStatus = this.taskStore.tasksByStatus;
+
+  /** Same reasoning as Phase 12's Dashboard: only skeleton when there's genuinely nothing resolved yet. */
+  protected readonly boardSkeleton = computed(
+    () =>
+      this.taskStatus() === 'loading' ||
+      (this.taskStatus() === 'reloading' && this.taskStore.tasks().length === 0),
+  );
+
+  protected readonly statusFilter = this.taskStore.statusFilter;
+  protected readonly priorityFilter = this.taskStore.priorityFilter;
+  protected readonly assigneeFilter = this.taskStore.assigneeFilter;
+
+  protected readonly assigneeOptionsStatus = this.userService.users.status;
+  /**
+   * `value()` throws while the resource is in its 'error' state (see Phase
+   * 12) — `TaskFiltersBar` already renders its own error UI from
+   * `assigneeOptionsStatus`, so this just needs to never throw, not carry
+   * real data, when there isn't any.
+   */
+  protected readonly assigneeOptions = computed(() =>
+    this.assigneeOptionsStatus() === 'error' ? [] : this.userService.users.value(),
+  );
+
+  protected retryTasks(): void {
+    this.taskStore.reload();
+  }
+}

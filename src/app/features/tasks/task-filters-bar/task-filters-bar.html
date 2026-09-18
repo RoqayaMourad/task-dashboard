@@ -1,0 +1,68 @@
+<div
+  class="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-white p-4 shadow-chrome"
+>
+  <div role="group" aria-label="Filter by status" class="flex flex-wrap gap-2">
+    @for (opt of statusOptions; track opt.value) {
+      <button
+        type="button"
+        [attr.aria-pressed]="statusFilter() === opt.value"
+        (click)="statusFilterChange.emit(opt.value)"
+        class="rounded px-4 py-2 text-sm font-medium"
+        [class.bg-primary]="statusFilter() === opt.value"
+        [class.text-white]="statusFilter() === opt.value"
+        [class.text-text-heading]="statusFilter() !== opt.value"
+      >
+        {{ opt.label }}
+      </button>
+    }
+  </div>
+
+  <div class="flex flex-wrap items-center gap-2">
+    <label class="sr-only" for="priority-filter">Filter by priority</label>
+    <select
+      id="priority-filter"
+      class="rounded border border-border px-3 py-2 text-sm text-text-heading"
+      [value]="priorityFilter()"
+      (change)="priorityFilterChange.emit($any($event.target).value)"
+    >
+      <option value="all">All Priorities</option>
+      <option value="high">High</option>
+      <option value="medium">Medium</option>
+      <option value="low">Low</option>
+    </select>
+
+    <label class="sr-only" for="assignee-filter">Filter by assignee</label>
+    <select
+      id="assignee-filter"
+      class="rounded border border-border px-3 py-2 text-sm text-text-heading"
+      [value]="assigneeFilter()"
+      [disabled]="assigneeOptionsStatus() === 'loading' || assigneeOptionsStatus() === 'error'"
+      (change)="assigneeFilterChange.emit($any($event.target).value)"
+    >
+      @switch (assigneeOptionsStatus()) {
+        @case ('loading') {
+          <option value="all">Loading assignees…</option>
+        }
+        @case ('error') {
+          <option value="all">Assignees unavailable</option>
+        }
+        @default {
+          <option value="all">All Assignees</option>
+          @for (assignee of assigneeOptions(); track assignee.id) {
+            <option [value]="assignee.id">{{ assignee.name }}</option>
+          }
+        }
+      }
+    </select>
+
+    <button
+      type="button"
+      disabled
+      aria-disabled="true"
+      title="Available once task creation ships (Increment 3)"
+      class="cursor-not-allowed rounded bg-primary px-4 py-2 text-sm font-semibold text-white opacity-50"
+    >
+      + New Task
+    </button>
+  </div>
+</div>

@@ -1,0 +1,24 @@
+<section
+  class="flex min-h-[400px] flex-1 flex-col rounded-lg bg-white p-4 shadow-chrome"
+  [attr.aria-labelledby]="'col-' + status() + '-heading'"
+>
+  <div class="flex items-center justify-between border-b-2 border-border pb-2.5">
+    <h2
+      [id]="'col-' + status() + '-heading'"
+      class="text-sm font-bold tracking-wide text-text-heading uppercase"
+    >
+      {{ label() }}
+    </h2>
+    <span class="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-bold text-text-heading">
+      {{ tasks().length }}
+    </span>
+  </div>
+
+  <div class="mt-4 flex flex-1 flex-col gap-4">
+    @for (task of tasks(); track task.id) {
+      <app-task-card [task]="task" />
+    } @empty {
+      <p class="text-sm text-text-muted">No tasks</p>
+    }
+  </div>
+</section>
