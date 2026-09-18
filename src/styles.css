@@ -1,1 +1,41 @@
 @import "tailwindcss";
+
+/**
+ * Semantic design tokens (Tailwind v4 CSS-first `@theme`, no tailwind.config.js).
+ * Only values that recur with business meaning across unrelated components
+ * (badges, buttons, nav, stat icons, hover rings, accent bars) are promoted
+ * here. Neutrals, spacing, radii, and font sizes stay on Tailwind's default
+ * scale, which already matches the design screenshots.
+ *
+ * Kept semantically separate even where hues currently overlap (--color-primary
+ * vs --color-status-todo; --color-priority-low vs --color-status-done), so a
+ * future rebrand of one doesn't silently affect the other.
+ */
+@theme {
+  /* Brand */
+  --color-primary: var(--color-blue-600);
+  --color-primary-hover: var(--color-blue-700);
+
+  /* Board status — column accents + card hover ring */
+  --color-status-todo: var(--color-blue-500);
+  --color-status-in-progress: var(--color-amber-500);
+  --color-status-done: var(--color-green-500);
+
+  /* Task priority — badges, filters */
+  --color-priority-high: var(--color-red-600);
+  --color-priority-medium: var(--color-amber-600);
+  --color-priority-low: var(--color-emerald-600);
+
+  /* Due-date state — independent of priority/status, overrides hover ring */
+  --color-overdue: var(--color-red-600);
+}
+
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-primary ring-offset-2;
+  }
+}
