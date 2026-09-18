@@ -12,16 +12,17 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 interface NavItem {
   label: string;
   path: string;
-  icon: 'dashboard' | 'tasks' | 'calendar' | 'analytics' | 'team' | 'settings';
+  /** Decorative emoji glyph — matches the Figma source's icon treatment (Phase 18). */
+  icon: string;
 }
 
 const NAV_ITEMS: readonly NavItem[] = [
-  { label: 'Dashboard', path: '/dashboard', icon: 'dashboard' },
-  { label: 'Tasks', path: '/tasks', icon: 'tasks' },
-  { label: 'Calendar', path: '/calendar', icon: 'calendar' },
-  { label: 'Analytics', path: '/analytics', icon: 'analytics' },
-  { label: 'Team', path: '/team', icon: 'team' },
-  { label: 'Settings', path: '/settings', icon: 'settings' },
+  { label: 'Dashboard', path: '/dashboard', icon: '📊' },
+  { label: 'Tasks', path: '/tasks', icon: '✅' },
+  { label: 'Calendar', path: '/calendar', icon: '📅' },
+  { label: 'Analytics', path: '/analytics', icon: '📈' },
+  { label: 'Team', path: '/team', icon: '👥' },
+  { label: 'Settings', path: '/settings', icon: '⚙️' },
 ];
 
 /**

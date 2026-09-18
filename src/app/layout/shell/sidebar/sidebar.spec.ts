@@ -25,7 +25,8 @@ describe('Sidebar', () => {
 
   it('should render a link for each of the six nav items', async () => {
     const { fixture } = await setup();
-    const links: NodeListOf<HTMLAnchorElement> = fixture.nativeElement.querySelectorAll('a[href]');
+    const links: NodeListOf<HTMLAnchorElement> =
+      fixture.nativeElement.querySelectorAll('nav a[href]');
     const hrefs = Array.from(links).map((a) => a.getAttribute('href'));
     expect(hrefs).toEqual([
       '/dashboard',
@@ -60,11 +61,30 @@ describe('Sidebar', () => {
     expect(emitted).toHaveBeenCalledTimes(1);
   });
 
-  it('should render the New Task CTA as disabled', async () => {
+  it('should render the New Task CTA as a working link to /tasks', async () => {
     const { fixture } = await setup();
-    const button = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
-    expect(button.disabled).toBe(true);
-    expect(button.textContent).toContain('New Task');
+    const links: HTMLAnchorElement[] = Array.from(
+      fixture.nativeElement.querySelectorAll('a[href="/tasks"]'),
+    );
+    const cta = links.find((a) => a.textContent?.includes('New Task'));
+
+    expect(cta).toBeTruthy();
+    expect(cta?.getAttribute('href')).toBe('/tasks');
+  });
+
+  it('should emit navigated when the New Task CTA is clicked, same as a nav link', async () => {
+    const { fixture } = await setup();
+    const emitted = vi.fn();
+    fixture.componentInstance.navigated.subscribe(emitted);
+
+    const links: HTMLAnchorElement[] = Array.from(
+      fixture.nativeElement.querySelectorAll('a[href="/tasks"]'),
+    );
+    const cta = links.find((a) => a.textContent?.includes('New Task'));
+    cta?.click();
+    await fixture.whenStable();
+
+    expect(emitted).toHaveBeenCalledTimes(1);
   });
 
   it('should move focus into the panel when it opens', async () => {
