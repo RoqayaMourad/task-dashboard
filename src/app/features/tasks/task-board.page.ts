@@ -4,10 +4,13 @@ import {
   Component,
   OnDestroy,
   computed,
+  effect,
   inject,
   signal,
   viewChild,
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router } from '@angular/router';
 import { CdkDragDrop, CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialog } from 'primeng/confirmdialog';
@@ -50,6 +53,52 @@ export class TaskBoardPage implements RouteSearchable, OnDestroy {
   private readonly userService = inject(UserService);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+
+  /**
+   * Sidebar's "+ New Task" CTA encodes intent as `/tasks?new` rather than
+   * calling into this page directly, so it stays a plain, generic link with
+   * no knowledge of `TaskFormDialog`/`TaskStore`. Read reactively (via
+   * `toSignal`, not a one-time `route.snapshot` read) because a second CTA
+   * click while this page is already mounted re-navigates to the same
+   * route with the same query param present again — a snapshot is read
+   * once per component lifetime and would miss that.
+   */
+  private readonly queryParamMap = toSignal(this.route.queryParamMap, {
+    initialValue: this.route.snapshot.queryParamMap,
+  });
+
+  constructor() {
+    effect(() => {
+      if (!this.queryParamMap().has('new')) {
+        return;
+      }
+      // Never clobbers an already-open dialog (e.g. mid-Edit) — only opens
+      // Create when nothing is open yet.
+      if (!this.formOpen()) {
+        this.openCreateForm();
+      }
+      this.clearNewTaskIntent();
+    });
+  }
+
+  /**
+   * Strips the one-shot `new` query param the instant it's read, via
+   * `replaceUrl` rather than a normal navigation: this overwrites the
+   * `?new` history entry instead of adding one, so the URL settles back to
+   * bare `/tasks` immediately (nothing left to reopen on refresh) and Back
+   * skips straight over this transient state to wherever the user actually
+   * came from.
+   */
+  private clearNewTaskIntent(): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { new: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
 
   protected readonly columns = COLUMNS;
 

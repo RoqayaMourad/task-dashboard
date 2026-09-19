@@ -31,6 +31,11 @@ const NAV_ITEMS: readonly NavItem[] = [
  * already removes hidden content from the tab order and a11y tree — no `inert`
  * or JS breakpoint tracking needed), while `lg:flex` unconditionally keeps it
  * visible on desktop regardless of `open`.
+ *
+ * The "+ New Task" CTA is a plain `routerLink`/`queryParams` link to
+ * `/tasks?new` — Sidebar has no knowledge of `TaskFormDialog`/`TaskStore` at
+ * all, the same as any other nav link. `TaskBoardPage` is solely responsible
+ * for interpreting that one-shot query-param intent (see its own docs).
  */
 @Component({
   selector: 'app-sidebar',

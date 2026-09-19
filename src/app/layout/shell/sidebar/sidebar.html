@@ -31,7 +31,8 @@
   </nav>
 
   <a
-    routerLink="/tasks"
+    [routerLink]="['/tasks']"
+    [queryParams]="{ new: '' }"
     (click)="navigated.emit()"
     class="flex items-center justify-center gap-2 rounded-sm bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover"
   >

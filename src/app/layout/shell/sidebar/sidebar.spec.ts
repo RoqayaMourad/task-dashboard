@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Sidebar } from './sidebar';
 
@@ -61,15 +61,21 @@ describe('Sidebar', () => {
     expect(emitted).toHaveBeenCalledTimes(1);
   });
 
-  it('should render the New Task CTA as a working link to /tasks', async () => {
-    const { fixture } = await setup();
-    const links: HTMLAnchorElement[] = Array.from(
-      fixture.nativeElement.querySelectorAll('a[href="/tasks"]'),
-    );
-    const cta = links.find((a) => a.textContent?.includes('New Task'));
+  function newTaskCta(fixture: ComponentFixture<Sidebar>): HTMLAnchorElement {
+    const links: HTMLAnchorElement[] = Array.from(fixture.nativeElement.querySelectorAll('a'));
+    return links.find((a) => a.textContent?.includes('New Task'))!;
+  }
 
-    expect(cta).toBeTruthy();
-    expect(cta?.getAttribute('href')).toBe('/tasks');
+  it('renders the New Task CTA as a link to /tasks carrying the new-task query intent', async () => {
+    const { fixture } = await setup();
+    const cta = newTaskCta(fixture);
+
+    const href = cta.getAttribute('href')!;
+    const { pathname, searchParams } = new URL(href, 'http://localhost');
+    expect(pathname).toBe('/tasks');
+    // Presence-checked by the consumer, never string/boolean-compared — see
+    // TaskBoardPage's queryParamMap handling.
+    expect(searchParams.has('new')).toBe(true);
   });
 
   it('should emit navigated when the New Task CTA is clicked, same as a nav link', async () => {
@@ -77,11 +83,7 @@ describe('Sidebar', () => {
     const emitted = vi.fn();
     fixture.componentInstance.navigated.subscribe(emitted);
 
-    const links: HTMLAnchorElement[] = Array.from(
-      fixture.nativeElement.querySelectorAll('a[href="/tasks"]'),
-    );
-    const cta = links.find((a) => a.textContent?.includes('New Task'));
-    cta?.click();
+    newTaskCta(fixture).click();
     await fixture.whenStable();
 
     expect(emitted).toHaveBeenCalledTimes(1);

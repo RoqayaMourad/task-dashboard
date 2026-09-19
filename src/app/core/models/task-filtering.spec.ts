@@ -110,4 +110,87 @@ describe('groupTasksByStatus', () => {
     expect(groups.in_progress).toEqual([]);
     expect(groups.done).toEqual([]);
   });
+
+  it('orders To Do by dueDate ascending (overdue/earliest first)', () => {
+    const latest = task({ id: 't-1', status: 'todo', dueDate: '2026-09-25' });
+    const overdue = task({ id: 't-2', status: 'todo', dueDate: '2026-01-01' });
+    const middle = task({ id: 't-3', status: 'todo', dueDate: '2026-06-01' });
+
+    const groups = groupTasksByStatus([latest, overdue, middle]);
+
+    expect(groups.todo.map((t) => t.id)).toEqual(['t-2', 't-3', 't-1']);
+  });
+
+  it('orders In Progress by dueDate ascending (overdue/earliest first)', () => {
+    const latest = task({ id: 't-1', status: 'in_progress', dueDate: '2026-09-25' });
+    const overdue = task({ id: 't-2', status: 'in_progress', dueDate: '2026-01-01' });
+    const middle = task({ id: 't-3', status: 'in_progress', dueDate: '2026-06-01' });
+
+    const groups = groupTasksByStatus([latest, overdue, middle]);
+
+    expect(groups.in_progress.map((t) => t.id)).toEqual(['t-2', 't-3', 't-1']);
+  });
+
+  it('orders Done by completedAt descending (most recently completed first)', () => {
+    const oldest = task({ id: 't-1', status: 'done', completedAt: '2026-01-01T00:00:00.000Z' });
+    const newest = task({ id: 't-2', status: 'done', completedAt: '2026-09-01T00:00:00.000Z' });
+    const middle = task({ id: 't-3', status: 'done', completedAt: '2026-06-01T00:00:00.000Z' });
+
+    const groups = groupTasksByStatus([oldest, newest, middle]);
+
+    expect(groups.done.map((t) => t.id)).toEqual(['t-2', 't-3', 't-1']);
+  });
+
+  it('breaks equal-dueDate ties deterministically by id, regardless of input order', () => {
+    const same = '2026-06-01';
+    const a = task({ id: 't-a', status: 'todo', dueDate: same });
+    const b = task({ id: 't-b', status: 'todo', dueDate: same });
+
+    expect(groupTasksByStatus([b, a]).todo.map((t) => t.id)).toEqual(['t-a', 't-b']);
+    expect(groupTasksByStatus([a, b]).todo.map((t) => t.id)).toEqual(['t-a', 't-b']);
+  });
+
+  it('breaks equal-completedAt ties in Done deterministically by id, regardless of input order', () => {
+    const same = '2026-06-01T00:00:00.000Z';
+    const a = task({ id: 't-a', status: 'done', completedAt: same });
+    const b = task({ id: 't-b', status: 'done', completedAt: same });
+
+    expect(groupTasksByStatus([b, a]).done.map((t) => t.id)).toEqual(['t-a', 't-b']);
+    expect(groupTasksByStatus([a, b]).done.map((t) => t.id)).toEqual(['t-a', 't-b']);
+  });
+
+  it('sorts a task with an unparseable dueDate after every valid one, regardless of input order', () => {
+    const valid = task({ id: 't-1', status: 'todo', dueDate: '2026-06-01' });
+    const invalid = task({ id: 't-2', status: 'todo', dueDate: 'not-a-date' });
+
+    expect(groupTasksByStatus([invalid, valid]).todo.map((t) => t.id)).toEqual(['t-1', 't-2']);
+    expect(groupTasksByStatus([valid, invalid]).todo.map((t) => t.id)).toEqual(['t-1', 't-2']);
+  });
+
+  it('sorts a task with a missing or unparseable completedAt after every valid one in Done, regardless of input order', () => {
+    const valid = task({ id: 't-1', status: 'done', completedAt: '2026-06-01T00:00:00.000Z' });
+    const invalid = task({ id: 't-2', status: 'done', completedAt: 'not-a-date' });
+    const missing = task({ id: 't-3', status: 'done', completedAt: undefined });
+
+    expect(groupTasksByStatus([invalid, missing, valid]).done.map((t) => t.id)).toEqual([
+      't-1',
+      't-2',
+      't-3',
+    ]);
+    expect(groupTasksByStatus([valid, invalid, missing]).done.map((t) => t.id)).toEqual([
+      't-1',
+      't-2',
+      't-3',
+    ]);
+  });
+
+  it('does not mutate or reorder the input array', () => {
+    const later = task({ id: 't-1', status: 'todo', dueDate: '2026-09-25' });
+    const earlier = task({ id: 't-2', status: 'todo', dueDate: '2026-01-01' });
+    const input = [later, earlier];
+
+    groupTasksByStatus(input);
+
+    expect(input.map((t) => t.id)).toEqual(['t-1', 't-2']);
+  });
 });

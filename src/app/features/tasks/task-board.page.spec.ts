@@ -1,11 +1,17 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { Location } from '@angular/common';
+import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { provideRouter, Router } from '@angular/router';
 import { CdkDrag } from '@angular/cdk/drag-drop';
 import { Assignee, Task, TaskStatus } from '../../core/models/task.model';
 import { TaskStore } from '../../core/services/task.store';
 import { TaskBoardPage } from './task-board.page';
+
+@Component({ selector: 'app-stub-page', template: '' })
+class StubPage {}
 
 function flushMacrotask(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 0));
@@ -46,7 +52,11 @@ describe('TaskBoardPage', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([{ path: '**', component: StubPage }]),
+      ],
     });
     fixture = TestBed.createComponent(TaskBoardPage);
     httpMock = TestBed.inject(HttpTestingController);
@@ -309,6 +319,51 @@ describe('TaskBoardPage', () => {
 
     expect(fixture.nativeElement.querySelector('#task-title')).toBeNull();
     expect(fixture.nativeElement.querySelectorAll('app-task-card').length).toBe(1);
+  });
+
+  it('places a newly created task by its dueDate, above an existing later-due task', async () => {
+    await boardReady([
+      fixtureTask({ id: 'later', title: 'Later task', status: 'todo', dueDate: '2026-12-01' }),
+    ]);
+
+    buttonByText('+ New Task').click();
+    fixture.detectChanges();
+    fillValidTaskForm(); // due 2026-10-01 — earlier than the existing 'later' task
+    submitForm();
+
+    const req = httpMock.expectOne('/api/tasks');
+    req.flush({ ...req.request.body, id: 'new-1', assignee });
+    await flushMacrotask();
+    fixture.detectChanges();
+
+    const todoCards = Array.from(
+      columnSection('To Do').querySelectorAll('app-task-card h3'),
+    ) as HTMLElement[];
+    expect(todoCards.map((h) => h.textContent?.trim())).toEqual(['Ship the feature', 'Later task']);
+  });
+
+  it('places a newly created task by its dueDate, below an existing earlier-due task — never forced to the top', async () => {
+    await boardReady([
+      fixtureTask({ id: 'earlier', title: 'Earlier task', status: 'todo', dueDate: '2026-01-01' }),
+    ]);
+
+    buttonByText('+ New Task').click();
+    fixture.detectChanges();
+    fillValidTaskForm(); // due 2026-10-01 — later than the existing 'earlier' task
+    submitForm();
+
+    const req = httpMock.expectOne('/api/tasks');
+    req.flush({ ...req.request.body, id: 'new-1', assignee });
+    await flushMacrotask();
+    fixture.detectChanges();
+
+    const todoCards = Array.from(
+      columnSection('To Do').querySelectorAll('app-task-card h3'),
+    ) as HTMLElement[];
+    expect(todoCards.map((h) => h.textContent?.trim())).toEqual([
+      'Earlier task',
+      'Ship the feature',
+    ]);
   });
 
   it('keeps the create dialog open with an inline error, preserving values, on failure', async () => {
@@ -639,5 +694,79 @@ describe('TaskBoardPage', () => {
     req.flush(fixtureTask({ id: 't-1', status: 'in_progress', priority: 'high' }));
     await flushMacrotask();
     fixture.detectChanges();
+  });
+
+  // --- Phase 20.6: "/tasks?new" one-shot navigation intent ---------------
+  //
+  // The static "+ New Task" button's own label always contains the
+  // substring "New Task", so these checks use `#task-title` (only rendered
+  // while the form dialog is actually open) and the PrimeNG dialog's own
+  // `.p-dialog-title` heading, never a page-wide text-content substring
+  // match against "New Task".
+
+  function dialogHeading(): string | null {
+    return fixture.nativeElement.querySelector('.p-dialog-title')?.textContent?.trim() ?? null;
+  }
+
+  it('does not open the Create dialog on a plain /tasks mount with no intent', async () => {
+    await boardReady([]);
+
+    expect(fixture.nativeElement.querySelector('#task-title')).toBeNull();
+  });
+
+  it('opens the Create dialog on arrival via /tasks?new and clears the param back to bare /tasks', async () => {
+    const router = TestBed.inject(Router);
+    await router.navigateByUrl('/tasks?new');
+
+    // Fresh instance mirroring a real route activation after that
+    // navigation — the shared `fixture` from beforeEach predates it.
+    fixture = TestBed.createComponent(TaskBoardPage);
+    await boardReady([]);
+
+    expect(dialogHeading()).toBe('New Task');
+    expect(TestBed.inject(Location).path()).toBe('/tasks');
+  });
+
+  it('reopens the Create dialog on a second /tasks?new navigation while the page stays mounted', async () => {
+    const router = TestBed.inject(Router);
+    await router.navigateByUrl('/tasks?new');
+    fixture = TestBed.createComponent(TaskBoardPage);
+    await boardReady([]);
+    expect(dialogHeading()).toBe('New Task');
+
+    // First intent already consumed — dismiss it, same as a normal Cancel.
+    buttonByText('Cancel').click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#task-title')).toBeNull();
+
+    await router.navigateByUrl('/tasks?new');
+    fixture.detectChanges();
+    await flushMacrotask();
+    fixture.detectChanges();
+
+    expect(dialogHeading()).toBe('New Task');
+    expect(TestBed.inject(Location).path()).toBe('/tasks');
+  });
+
+  it('does not clobber an already-open Edit dialog with an incoming /tasks?new intent', async () => {
+    await boardReady([fixtureTask({ id: 't-1', title: 'Design homepage' })]);
+
+    clickMenuItem('Edit');
+    expect(dialogHeading()).toBe('Edit Task');
+
+    const router = TestBed.inject(Router);
+    await router.navigateByUrl('/tasks?new');
+    fixture.detectChanges();
+
+    expect(dialogHeading()).toBe('Edit Task');
+  });
+
+  it('leaves the in-page New Task button working unchanged alongside the query intent', async () => {
+    await boardReady([]);
+
+    buttonByText('+ New Task').click();
+    fixture.detectChanges();
+
+    expect(dialogHeading()).toBe('New Task');
   });
 });
