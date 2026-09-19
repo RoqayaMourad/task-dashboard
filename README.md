@@ -93,6 +93,7 @@ Open `http://localhost:4200`. The dev server proxies `/api/*` to JSON Server on 
 - 80% global coverage threshold (statements/branches/functions/lines)
 - 261 tests across 33 spec files — Statements 95.95%, Branches 97.62%, Functions 89.17%, Lines 97.20%
 - ESLint + Prettier, enforced on commit via Husky/lint-staged
+- GitHub Actions runs formatting, lint, tests with coverage, and the production build on every push and pull request
 
 ## Known Limitations
 
@@ -108,4 +109,4 @@ Open `http://localhost:4200`. The dev server proxies `/api/*` to JSON Server on 
 - Server-derived statistics
 - Authentication and a real current-user context
 - Persisted Kanban ranking if the backend contract gains an order field
-- CI/CD and deployment
+- Deployment
