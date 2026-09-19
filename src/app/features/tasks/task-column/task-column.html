@@ -1,6 +1,10 @@
 <section
   class="flex min-h-[400px] flex-1 flex-col rounded-lg bg-white p-4 shadow-chrome"
   [attr.aria-labelledby]="'col-' + status() + '-heading'"
+  cdkDropList
+  [cdkDropListData]="status()"
+  [cdkDropListSortingDisabled]="true"
+  (cdkDropListDropped)="onDropped($event)"
 >
   <div class="flex items-center justify-between border-b-2 border-border pb-2.5">
     <h2
@@ -17,6 +21,9 @@
   <div class="mt-4 flex flex-1 flex-col gap-4">
     @for (task of tasks(); track task.id) {
       <app-task-card
+        cdkDrag
+        [cdkDragData]="task"
+        [cdkDragDisabled]="mutationPending()"
         [task]="task"
         [mutationPending]="mutationPending()"
         (editRequested)="editRequested.emit($event)"

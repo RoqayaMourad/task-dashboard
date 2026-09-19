@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { CdkDrag, CdkDropList } from '@angular/cdk/drag-drop';
 import { Task } from '../../../core/models/task.model';
 import { TaskCard } from '../task-card/task-card';
 import { TaskColumn } from './task-column';
@@ -82,5 +83,45 @@ describe('TaskColumn', () => {
     );
     expect(kebabButtons.length).toBe(2);
     expect(kebabButtons.every((b) => b.disabled)).toBe(true);
+  });
+
+  it("exposes the column's own status as typed cdkDropListData, not a string id", () => {
+    const fixture = createComponent([fixtureTask()]);
+
+    const dropList = fixture.debugElement
+      .query(By.directive(CdkDropList))
+      .injector.get(CdkDropList);
+
+    expect(dropList.data).toBe('todo');
+  });
+
+  it('relays a cdkDropListDropped event as cardDropped unchanged, deciding nothing itself', () => {
+    const fixture = createComponent([fixtureTask()]);
+    const emitted = vi.fn();
+    fixture.componentInstance.cardDropped.subscribe(emitted);
+    const fakeEvent = {
+      previousContainer: { data: 'todo' },
+      container: { data: 'done' },
+      item: { data: fixtureTask() },
+    };
+
+    fixture.debugElement
+      .query(By.directive(CdkDropList))
+      .triggerEventHandler('cdkDropListDropped', fakeEvent);
+
+    expect(emitted).toHaveBeenCalledWith(fakeEvent);
+  });
+
+  it('disables starting a drag on every card while mutationPending is true', () => {
+    const fixture = createComponent([fixtureTask({ id: 't-1' })]);
+
+    const dragBefore = fixture.debugElement.query(By.directive(CdkDrag)).injector.get(CdkDrag);
+    expect(dragBefore.disabled).toBe(false);
+
+    fixture.componentRef.setInput('mutationPending', true);
+    fixture.detectChanges();
+
+    const dragAfter = fixture.debugElement.query(By.directive(CdkDrag)).injector.get(CdkDrag);
+    expect(dragAfter.disabled).toBe(true);
   });
 });

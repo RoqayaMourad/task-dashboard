@@ -1,7 +1,9 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Assignee, Task } from '../../core/models/task.model';
+import { By } from '@angular/platform-browser';
+import { CdkDrag } from '@angular/cdk/drag-drop';
+import { Assignee, Task, TaskStatus } from '../../core/models/task.model';
 import { TaskStore } from '../../core/services/task.store';
 import { TaskBoardPage } from './task-board.page';
 
@@ -495,5 +497,147 @@ describe('TaskBoardPage', () => {
     fixture.detectChanges();
 
     expect(document.activeElement).toBe(button);
+  });
+
+  // --- Increment 4: Drag-and-drop status changes ------------------------
+  //
+  // jsdom has no real pointer/drag-gesture pipeline (the same limitation
+  // already documented for Chart.js's canvas), so these call the
+  // component's own drop handler directly with a minimal event shape
+  // carrying only what it reads (`previousContainer.data`/`container.data`/
+  // `item.data`) rather than simulating a real CDK pointer drag.
+
+  interface FakeDrop {
+    previousContainer: { data: TaskStatus };
+    container: { data: TaskStatus };
+    item: { data: Task };
+  }
+
+  function dropEvent(source: TaskStatus, target: TaskStatus, task: Task): FakeDrop {
+    return {
+      previousContainer: { data: source },
+      container: { data: target },
+      item: { data: task },
+    };
+  }
+
+  function dispatchDrop(event: FakeDrop): void {
+    (fixture.componentInstance as unknown as { onCardDropped(e: FakeDrop): void }).onCardDropped(
+      event,
+    );
+    fixture.detectChanges();
+  }
+
+  function columnSection(label: string): HTMLElement {
+    const headings: HTMLElement[] = Array.from(fixture.nativeElement.querySelectorAll('h2'));
+    return headings.find((h) => h.textContent?.trim() === label)!.closest('section')!;
+  }
+
+  it('delegates a cross-column drop to TaskStore.update with the typed target status', async () => {
+    await boardReady([fixtureTask({ id: 't-1', status: 'todo' })]);
+
+    dispatchDrop(dropEvent('todo', 'in_progress', fixtureTask({ id: 't-1', status: 'todo' })));
+
+    const req = httpMock.expectOne('/api/tasks/t-1');
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body.status).toBe('in_progress');
+
+    req.flush(fixtureTask({ id: 't-1', status: 'in_progress' }));
+    await flushMacrotask();
+    fixture.detectChanges();
+
+    expect(columnSection('In Progress').textContent).toContain('Design homepage');
+    expect(columnSection('To Do').textContent).not.toContain('Design homepage');
+  });
+
+  it('is a no-op when the drop target status equals the source status', async () => {
+    await boardReady([fixtureTask({ id: 't-1', status: 'todo' })]);
+
+    dispatchDrop(dropEvent('todo', 'todo', fixtureTask({ id: 't-1', status: 'todo' })));
+
+    httpMock.expectNone('/api/tasks/t-1');
+  });
+
+  it('ignores a drop while a mutation is already pending', async () => {
+    await boardReady([fixtureTask({ id: 't-1', status: 'todo' })]);
+
+    buttonByText('+ New Task').click();
+    fixture.detectChanges();
+    fillValidTaskForm();
+    submitForm();
+    expect(TestBed.inject(TaskStore).mutationPending()).toBe(true);
+
+    dispatchDrop(dropEvent('todo', 'done', fixtureTask({ id: 't-1', status: 'todo' })));
+    httpMock.expectNone('/api/tasks/t-1');
+
+    httpMock.expectOne('/api/tasks').flush({ ...fixtureTask({ id: 'new-1' }) });
+    await flushMacrotask();
+    fixture.detectChanges();
+  });
+
+  it('disables dragging on every card while a mutation is pending', async () => {
+    await boardReady([fixtureTask({ id: 't-1' })]);
+
+    const dragBefore = fixture.debugElement.query(By.directive(CdkDrag)).injector.get(CdkDrag);
+    expect(dragBefore.disabled).toBe(false);
+
+    buttonByText('+ New Task').click();
+    fixture.detectChanges();
+    fillValidTaskForm();
+    submitForm();
+    fixture.detectChanges();
+
+    const dragAfter = fixture.debugElement.query(By.directive(CdkDrag)).injector.get(CdkDrag);
+    expect(dragAfter.disabled).toBe(true);
+
+    httpMock.expectOne('/api/tasks').flush({ ...fixtureTask({ id: 'new-1' }) });
+    await flushMacrotask();
+    fixture.detectChanges();
+  });
+
+  it('shows the board-level banner and leaves the task in its original column on a failed drop', async () => {
+    await boardReady([fixtureTask({ id: 't-1', title: 'Design homepage', status: 'todo' })]);
+
+    dispatchDrop(
+      dropEvent(
+        'todo',
+        'done',
+        fixtureTask({ id: 't-1', title: 'Design homepage', status: 'todo' }),
+      ),
+    );
+
+    httpMock.expectOne('/api/tasks/t-1').flush('boom', { status: 500, statusText: 'Server Error' });
+    await flushMacrotask();
+    fixture.detectChanges();
+
+    const banner = fixture.nativeElement.querySelector('[role="alert"]');
+    expect(banner?.textContent).toContain('Something went wrong (500)');
+    expect(columnSection('To Do').textContent).toContain('Design homepage');
+    expect(columnSection('Done').textContent).not.toContain('Design homepage');
+  });
+
+  it('still delegates a cross-column drop while a non-status filter is active', async () => {
+    await boardReady([
+      fixtureTask({ id: 't-1', status: 'todo', priority: 'high' }),
+      fixtureTask({ id: 't-2', status: 'todo', priority: 'low' }),
+    ]);
+
+    TestBed.inject(TaskStore).priorityFilter.set('high');
+    fixture.detectChanges();
+
+    dispatchDrop(
+      dropEvent(
+        'todo',
+        'in_progress',
+        fixtureTask({ id: 't-1', status: 'todo', priority: 'high' }),
+      ),
+    );
+
+    const req = httpMock.expectOne('/api/tasks/t-1');
+    expect(req.request.body.status).toBe('in_progress');
+
+    req.flush(fixtureTask({ id: 't-1', status: 'in_progress', priority: 'high' }));
+    await flushMacrotask();
+    fixture.detectChanges();
   });
 });

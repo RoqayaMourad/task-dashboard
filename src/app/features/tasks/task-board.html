@@ -15,9 +15,9 @@
   />
 </div>
 
-@if (showDeleteErrorBanner()) {
+@if (showMutationErrorBanner()) {
   <div role="alert" class="mt-4 rounded-lg bg-white p-4 shadow-chrome">
-    <p class="text-sm text-change-negative">{{ deleteErrorMessage() }}</p>
+    <p class="text-sm text-change-negative">{{ mutationBannerMessage() }}</p>
   </div>
 }
 
@@ -44,7 +44,7 @@
       </button>
     </div>
   } @else {
-    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+    <div cdkDropListGroup class="grid grid-cols-1 gap-6 lg:grid-cols-3">
       @for (col of columns; track col.status) {
         <app-task-column
           [status]="col.status"
@@ -53,6 +53,7 @@
           [mutationPending]="mutationPending()"
           (editRequested)="openEditForm($event)"
           (deleteRequested)="confirmDelete($event)"
+          (cardDropped)="onCardDropped($event)"
         />
       }
     </div>

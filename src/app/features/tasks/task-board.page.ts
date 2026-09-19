@@ -8,6 +8,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { CdkDragDrop, CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialog } from 'primeng/confirmdialog';
 import { RouteSearchable } from '../../layout/shell/route-searchable';
@@ -39,7 +40,7 @@ const COLUMNS: ReadonlyArray<{ status: TaskStatus; label: string }> = [
  */
 @Component({
   selector: 'app-task-board-page',
-  imports: [TaskColumn, TaskFiltersBar, TaskFormDialog, ConfirmDialog],
+  imports: [TaskColumn, TaskFiltersBar, TaskFormDialog, ConfirmDialog, CdkDropListGroup],
   templateUrl: './task-board.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [ConfirmationService],
@@ -98,17 +99,18 @@ export class TaskBoardPage implements RouteSearchable, OnDestroy {
   protected readonly mutationPending = this.taskStore.mutationPending;
   protected readonly mutationError = this.taskStore.mutationError;
   /**
-   * Delete failures have no open dialog left to show them in (ConfirmDialog
-   * closes itself immediately on Accept, before the mutation resolves — see
-   * PrimeNG's ConfirmDialog.onAccept), so they surface as a board-level
+   * Delete and drag-drop status-change failures both have no open dialog to
+   * show them in (ConfirmDialog closes itself immediately on Accept, before
+   * the mutation resolves — see PrimeNG's ConfirmDialog.onAccept — and a
+   * drag gesture never opens one at all), so both surface as a board-level
    * banner instead. Suppressed while the form dialog is open so a
    * create/edit failure — shown inline in the dialog itself — isn't
    * duplicated here.
    */
-  protected readonly showDeleteErrorBanner = computed(
+  protected readonly showMutationErrorBanner = computed(
     () => !this.formOpen() && !!this.mutationError(),
   );
-  protected readonly deleteErrorMessage = computed(() =>
+  protected readonly mutationBannerMessage = computed(() =>
     mutationErrorMessage(this.mutationError()),
   );
 
@@ -182,6 +184,36 @@ export class TaskBoardPage implements RouteSearchable, OnDestroy {
       // The task wasn't removed, so its kebab button is still in the DOM —
       // land back on it rather than the New Task fallback.
       this.restoreFocusAfterMutation();
+    }
+  }
+
+  /**
+   * Cross-column drop = a status change, delegated entirely to
+   * `TaskStore.update()` so `completedAt` transition semantics stay
+   * centralized — the same call `handleSave()` already makes for an edit.
+   * A same-column drop (source and target status equal) is a deliberate
+   * no-op: `Task` has no persisted order/position field, so nothing here
+   * ever calls `moveItemInArray`/`transferArrayItem` or mutates a local
+   * copy — `cdkDropListSortingDisabled` (set on every `TaskColumn`) already
+   * suppresses the misleading intra-column reorder preview during the drag
+   * itself. Drag is a pointer/touch gesture, not a keyboard action, so
+   * unlike Edit/Delete there is no `pendingFocusRestore` bookkeeping here.
+   */
+  protected onCardDropped(event: CdkDragDrop<TaskStatus, TaskStatus, Task>): void {
+    const sourceStatus = event.previousContainer.data;
+    const targetStatus = event.container.data;
+    if (sourceStatus === targetStatus || this.taskStore.mutationPending()) {
+      return;
+    }
+    this.changeStatus(event.item.data, targetStatus);
+  }
+
+  private async changeStatus(task: Task, status: TaskStatus): Promise<void> {
+    try {
+      await this.taskStore.update(task.id, { status });
+    } catch {
+      // taskStore.mutationError already holds the failure; showMutationErrorBanner
+      // renders it — a drag gesture has no dialog of its own to show it in.
     }
   }
 
