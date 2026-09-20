@@ -13,6 +13,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     provideHttpClient(withInterceptors([cacheInterceptor])),
     providePrimeNG({
+      overlayAppendTo: 'body',
       theme: {
         preset: Aura,
         options: {
