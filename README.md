@@ -108,3 +108,8 @@ Open `http://localhost:4200`. The dev server proxies `/api/*` to JSON Server on 
 - No authentication or current-user system
 - No persisted manual reordering within a column
 - Mock data dates drift over time without regeneration (generator not included)
+
+## Future Improvements
+
+- Persist task ordering if the backend introduces an explicit order field.
+- Replace the JSON Server mock backend with a persistent production API.
