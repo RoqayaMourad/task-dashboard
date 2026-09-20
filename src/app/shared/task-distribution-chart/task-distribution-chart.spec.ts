@@ -66,11 +66,13 @@ describe('TaskDistributionChart', () => {
   ];
 
   // `TaskDistributionChart` constructs its Chart.js instance inside
-  // `afterRenderEffect`, a post-render hook — `detectChanges()` alone
-  // doesn't guarantee it has run yet. `whenStable()` resolves once the
-  // zone (and therefore any pending afterRenderEffect callbacks) has
-  // settled, so every test awaits it before asserting on chart output.
-  async function createComponent(
+  // `afterRenderEffect`. That hook is registered by `detectChanges()` but
+  // actually runs via `AfterRenderManager`, invoked from `ApplicationRef.tick()`
+  // — not from a component-level `detectChanges()` call, and deliberately
+  // outside the Angular zone (so `whenStable()` doesn't wait for it either).
+  // `TestBed.tick()` (`flushEffects()`) drives that `ApplicationRef.tick()`
+  // directly, which is the documented way to flush a pending render effect.
+  function createComponent(
     overrides: {
       type?: 'bar' | 'doughnut';
       compact?: boolean;
@@ -83,7 +85,7 @@ describe('TaskDistributionChart', () => {
     fixture.componentRef.setInput('colorVars', { high: '--test-high', low: '--test-low' });
     fixture.componentRef.setInput('compact', overrides.compact ?? false);
     fixture.detectChanges();
-    await fixture.whenStable();
+    TestBed.tick();
     return fixture;
   }
 
@@ -92,16 +94,16 @@ describe('TaskDistributionChart', () => {
     lastConfig = undefined;
   });
 
-  it('labels the canvas for assistive tech', async () => {
-    const fixture = await createComponent();
+  it('labels the canvas for assistive tech', () => {
+    const fixture = createComponent();
     const canvas: HTMLCanvasElement = fixture.nativeElement.querySelector('canvas');
 
     expect(canvas.getAttribute('aria-label')).toBe('Tasks by priority');
     expect(canvas.getAttribute('role')).toBe('img');
   });
 
-  it('constructs a Chart.js chart with the given type and mapped data', async () => {
-    await createComponent({ type: 'doughnut' });
+  it('constructs a Chart.js chart with the given type and mapped data', () => {
+    createComponent({ type: 'doughnut' });
 
     expect(lastConfig).toMatchObject({
       type: 'doughnut',
@@ -112,14 +114,14 @@ describe('TaskDistributionChart', () => {
     });
   });
 
-  it('shows a visible breakdown when not compact', async () => {
-    const fixture = await createComponent({ compact: false });
+  it('shows a visible breakdown when not compact', () => {
+    const fixture = createComponent({ compact: false });
     const list: HTMLElement = fixture.nativeElement.querySelector('ul');
     expect(list.classList.contains('sr-only')).toBe(false);
   });
 
-  it('sr-only-hides the breakdown when compact', async () => {
-    const fixture = await createComponent({ compact: true });
+  it('sr-only-hides the breakdown when compact', () => {
+    const fixture = createComponent({ compact: true });
     const list: HTMLElement = fixture.nativeElement.querySelector('ul');
     expect(list.classList.contains('sr-only')).toBe(true);
   });
@@ -135,31 +137,31 @@ describe('TaskDistributionChart', () => {
         .legend;
     }
 
-    it('never shows a legend for the bar chart (Priority) — Chart.js would otherwise render a stray "undefined" dataset-label entry, since this chart never sets one', async () => {
-      await createComponent({ type: 'bar', compact: false });
+    it('never shows a legend for the bar chart (Priority) — Chart.js would otherwise render a stray "undefined" dataset-label entry, since this chart never sets one', () => {
+      createComponent({ type: 'bar', compact: false });
       expect(legendConfig().display).toBe(false);
     });
 
-    it('keeps the bar legend hidden when compact too', async () => {
-      await createComponent({ type: 'bar', compact: true });
+    it('keeps the bar legend hidden when compact too', () => {
+      createComponent({ type: 'bar', compact: true });
       expect(legendConfig().display).toBe(false);
     });
 
-    it('shows the legend for the doughnut chart (Status) when not compact, at full size', async () => {
-      await createComponent({ type: 'doughnut', compact: false });
+    it('shows the legend for the doughnut chart (Status) when not compact, at full size', () => {
+      createComponent({ type: 'doughnut', compact: false });
       expect(legendConfig().display).toBe(true);
       expect(legendConfig().labels).toBeUndefined();
     });
 
-    it('keeps the doughnut legend visible when compact, shrunk to fit — Dashboard has no other visible color key since its breakdown is sr-only', async () => {
-      await createComponent({ type: 'doughnut', compact: true });
+    it('keeps the doughnut legend visible when compact, shrunk to fit — Dashboard has no other visible color key since its breakdown is sr-only', () => {
+      createComponent({ type: 'doughnut', compact: true });
       expect(legendConfig().display).toBe(true);
       expect(legendConfig().labels).toEqual({ boxWidth: 8, padding: 6, font: { size: 10 } });
     });
   });
 
-  it('scopes the chart height to the canvas wrapper only, never to the host, so the visible breakdown is never height-clipped', async () => {
-    const fixture = await createComponent({ compact: false });
+  it('scopes the chart height to the canvas wrapper only, never to the host, so the visible breakdown is never height-clipped', () => {
+    const fixture = createComponent({ compact: false });
     const root: HTMLElement = fixture.nativeElement;
     const canvas = root.querySelector('canvas') as HTMLCanvasElement;
     const chartWrapper = canvas.parentElement as HTMLElement;
@@ -170,16 +172,16 @@ describe('TaskDistributionChart', () => {
     expect(chartWrapper.contains(list)).toBe(false);
   });
 
-  it('renders an accessible text breakdown matching the given data, in both modes', async () => {
-    const fixture = await createComponent();
+  it('renders an accessible text breakdown matching the given data, in both modes', () => {
+    const fixture = createComponent();
     const text = fixture.nativeElement.querySelector('ul').textContent as string;
 
     expect(text).toContain('High: 3 tasks (75%)');
     expect(text).toContain('Low: 1 task (25%)');
   });
 
-  it('destroys the chart on component destroy', async () => {
-    const fixture = await createComponent();
+  it('destroys the chart on component destroy', () => {
+    const fixture = createComponent();
     fixture.destroy();
 
     expect(destroySpy).toHaveBeenCalled();
@@ -190,14 +192,14 @@ describe('TaskDistributionChart', () => {
       'after the initial render — guards the effect()→afterRenderEffect migration: chart ' +
       'creation must stay tied to every render in which its signal inputs are dirty, not just ' +
       'the very first one',
-    async () => {
-      const fixture = await createComponent({ type: 'doughnut', compact: false });
+    () => {
+      const fixture = createComponent({ type: 'doughnut', compact: false });
       const initialConfig = lastConfig;
       destroySpy.mockClear();
 
       fixture.componentRef.setInput('compact', true);
       fixture.detectChanges();
-      await fixture.whenStable();
+      TestBed.tick();
 
       expect(destroySpy).toHaveBeenCalledTimes(1);
       expect(lastConfig).not.toBe(initialConfig);
