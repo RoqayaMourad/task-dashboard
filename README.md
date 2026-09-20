@@ -2,6 +2,12 @@
 
 A Kanban-style task management dashboard built with Angular 21 for the Senior Angular Developer assignment: task CRUD, search/filtering, drag-and-drop status changes, and a small analytics dashboard, backed by a mock JSON Server API.
 
+## Live Demo
+
+[https://task-dashboard-web-production.up.railway.app](https://task-dashboard-web-production.up.railway.app)
+
+The backend is a JSON Server mock API, not a real database. Task data may reset whenever the API service is redeployed.
+
 ## Features
 
 - Create, edit, and delete tasks through a reactive form with validation
