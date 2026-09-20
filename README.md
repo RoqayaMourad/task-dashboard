@@ -66,6 +66,10 @@ Open `http://localhost:4200`. The dev server proxies `/api/*` to JSON Server on 
 | `npm run lint` / `lint:fix`       | ESLint                         |
 | `npm run format` / `format:check` | Prettier                       |
 
+## Environment Configuration
+
+The app has no environment files and no build-time API URL configuration. It always calls relative `/api/*` paths, and each environment forwards them to the real backend at the infrastructure level instead: the Angular dev server's proxy (`proxy.conf.json`) locally, and a Caddy reverse proxy in production. No secrets or environment variables are required to run, build, or test the app.
+
 ## Architecture
 
 - Standalone components throughout, no `NgModule`s
@@ -100,6 +104,14 @@ Open `http://localhost:4200`. The dev server proxies `/api/*` to JSON Server on 
 - 261 tests across 33 spec files. Statements 95.95%, Branches 97.62%, Functions 89.17%, Lines 97.18%
 - ESLint + Prettier, enforced on commit via Husky/lint-staged
 - GitHub Actions runs formatting, lint, tests with coverage, and the production build on every push and pull request
+
+## Performance Optimization
+
+- OnPush change detection on every component, so a template only re-renders when its own inputs or signals actually change.
+- Every feature route is lazy-loaded, splitting the initial bundle by page.
+- `@for` loops are tracked by id everywhere, avoiding unnecessary DOM churn on list updates.
+- `httpResource` and `toSignal` own their subscription lifecycle, so there are no manual `.subscribe()` calls or RxJS cleanup to get wrong.
+- GET responses for `/api/tasks`, `/api/statistics`, and `/api/users` are cached by an interceptor and invalidated only by the mutations that affect them.
 
 ## Known Limitations
 
