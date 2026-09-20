@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DistributionSlice } from '../../core/models/task-distribution';
 import { mapToChartDataset, TaskDistributionChart } from './task-distribution-chart';
 
@@ -7,19 +7,36 @@ import { mapToChartDataset, TaskDistributionChart } from './task-distribution-ch
 // and tests our own integration (what we construct it with, that we
 // destroy it) rather than any canvas rendering, per the "don't test
 // canvas internals" constraint.
-const destroySpy = vi.fn();
-let lastConfig: unknown;
+//
+// Assertions read the constructed instance off the component's own `chart`
+// property (private, accessed via a type-safe cast), not off a spec-level
+// reference to the mocked `Chart` import. On this project's CI runner
+// (Linux/Node 22, not reproducible on Windows), the component's `chart.js`
+// import and this spec's own `chart.js` import resolved to two distinct
+// evaluations of the `vi.mock` factory — confirmed by direct logging: the
+// component reliably constructed a "MockChart" instance on every render,
+// while a spec-side `vi.mocked(Chart).mock.instances` (or an even earlier
+// closure variable set from inside the factory) stayed empty/undefined.
+// Reading the instance the component itself holds sidesteps that entirely —
+// it doesn't depend on which module evaluation produced it.
+interface MockChartInstance {
+  canvas: unknown;
+  config: unknown;
+  destroy: ReturnType<typeof vi.fn>;
+}
+
+interface ComponentWithChart {
+  chart?: MockChartInstance;
+}
 
 vi.mock('chart.js', () => {
   class MockChart {
     static register = vi.fn();
-    destroy = destroySpy;
+    destroy = vi.fn();
     constructor(
       public canvas: unknown,
       public config: unknown,
-    ) {
-      lastConfig = config;
-    }
+    ) {}
   }
   return {
     Chart: MockChart,
@@ -33,6 +50,14 @@ vi.mock('chart.js', () => {
     Legend: {},
   };
 });
+
+function chartOf(fixture: ComponentFixture<TaskDistributionChart>): MockChartInstance {
+  const instance = (fixture.componentInstance as unknown as ComponentWithChart).chart;
+  if (!instance) {
+    throw new Error('Expected TaskDistributionChart to have constructed a chart by now');
+  }
+  return instance;
+}
 
 describe('mapToChartDataset', () => {
   const slices: DistributionSlice<string>[] = [
@@ -89,11 +114,6 @@ describe('TaskDistributionChart', () => {
     return fixture;
   }
 
-  beforeEach(() => {
-    destroySpy.mockClear();
-    lastConfig = undefined;
-  });
-
   it('labels the canvas for assistive tech', () => {
     const fixture = createComponent();
     const canvas: HTMLCanvasElement = fixture.nativeElement.querySelector('canvas');
@@ -103,9 +123,9 @@ describe('TaskDistributionChart', () => {
   });
 
   it('constructs a Chart.js chart with the given type and mapped data', () => {
-    createComponent({ type: 'doughnut' });
+    const fixture = createComponent({ type: 'doughnut' });
 
-    expect(lastConfig).toMatchObject({
+    expect(chartOf(fixture).config).toMatchObject({
       type: 'doughnut',
       data: {
         labels: ['High', 'Low'],
@@ -132,31 +152,31 @@ describe('TaskDistributionChart', () => {
       labels?: { boxWidth: number; padding: number; font: { size: number } };
     }
 
-    function legendConfig(): LegendConfig {
-      return (lastConfig as { options: { plugins: { legend: LegendConfig } } }).options.plugins
-        .legend;
+    function legendConfig(fixture: ComponentFixture<TaskDistributionChart>): LegendConfig {
+      return (chartOf(fixture).config as { options: { plugins: { legend: LegendConfig } } }).options
+        .plugins.legend;
     }
 
     it('never shows a legend for the bar chart (Priority) — Chart.js would otherwise render a stray "undefined" dataset-label entry, since this chart never sets one', () => {
-      createComponent({ type: 'bar', compact: false });
-      expect(legendConfig().display).toBe(false);
+      const fixture = createComponent({ type: 'bar', compact: false });
+      expect(legendConfig(fixture).display).toBe(false);
     });
 
     it('keeps the bar legend hidden when compact too', () => {
-      createComponent({ type: 'bar', compact: true });
-      expect(legendConfig().display).toBe(false);
+      const fixture = createComponent({ type: 'bar', compact: true });
+      expect(legendConfig(fixture).display).toBe(false);
     });
 
     it('shows the legend for the doughnut chart (Status) when not compact, at full size', () => {
-      createComponent({ type: 'doughnut', compact: false });
-      expect(legendConfig().display).toBe(true);
-      expect(legendConfig().labels).toBeUndefined();
+      const fixture = createComponent({ type: 'doughnut', compact: false });
+      expect(legendConfig(fixture).display).toBe(true);
+      expect(legendConfig(fixture).labels).toBeUndefined();
     });
 
     it('keeps the doughnut legend visible when compact, shrunk to fit — Dashboard has no other visible color key since its breakdown is sr-only', () => {
-      createComponent({ type: 'doughnut', compact: true });
-      expect(legendConfig().display).toBe(true);
-      expect(legendConfig().labels).toEqual({ boxWidth: 8, padding: 6, font: { size: 10 } });
+      const fixture = createComponent({ type: 'doughnut', compact: true });
+      expect(legendConfig(fixture).display).toBe(true);
+      expect(legendConfig(fixture).labels).toEqual({ boxWidth: 8, padding: 6, font: { size: 10 } });
     });
   });
 
@@ -182,9 +202,10 @@ describe('TaskDistributionChart', () => {
 
   it('destroys the chart on component destroy', () => {
     const fixture = createComponent();
+    const instance = chartOf(fixture);
     fixture.destroy();
 
-    expect(destroySpy).toHaveBeenCalled();
+    expect(instance.destroy).toHaveBeenCalled();
   });
 
   it(
@@ -194,18 +215,18 @@ describe('TaskDistributionChart', () => {
       'the very first one',
     () => {
       const fixture = createComponent({ type: 'doughnut', compact: false });
-      const initialConfig = lastConfig;
-      destroySpy.mockClear();
+      const initialInstance = chartOf(fixture);
 
       fixture.componentRef.setInput('compact', true);
       fixture.detectChanges();
       TestBed.tick();
 
-      expect(destroySpy).toHaveBeenCalledTimes(1);
-      expect(lastConfig).not.toBe(initialConfig);
+      const recreatedInstance = chartOf(fixture);
+      expect(initialInstance.destroy).toHaveBeenCalledTimes(1);
+      expect(recreatedInstance).not.toBe(initialInstance);
       expect(
-        (lastConfig as { options: { plugins: { legend: { labels?: unknown } } } }).options.plugins
-          .legend.labels,
+        (recreatedInstance.config as { options: { plugins: { legend: { labels?: unknown } } } })
+          .options.plugins.legend.labels,
       ).toEqual({ boxWidth: 8, padding: 6, font: { size: 10 } });
     },
   );
