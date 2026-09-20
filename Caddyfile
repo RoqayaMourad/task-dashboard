@@ -1,0 +1,22 @@
+:{$PORT} {
+	encode gzip
+
+	# Mirrors proxy.conf.json's pathRewrite locally: json-server serves
+	# resources at its root (/tasks, /statistics, /users), not under /api,
+	# so the /api prefix must be stripped before forwarding. handle_path
+	# does exactly that (unlike a bare reverse_proxy /api/*, which would
+	# forward /api/tasks unchanged and 404 against the backend).
+	handle_path /api/* {
+		reverse_proxy {$API_INTERNAL_URL}
+	}
+
+	# handle (vs a second top-level directive) makes this block mutually
+	# exclusive with handle_path above by Caddy's own ordering guarantee,
+	# so this never has to rely on the default directive-order table for
+	# reverse_proxy vs. file_server to get /api/* routed correctly first.
+	handle {
+		root * dist/task-dashboard/browser
+		try_files {path} /index.html
+		file_server
+	}
+}
