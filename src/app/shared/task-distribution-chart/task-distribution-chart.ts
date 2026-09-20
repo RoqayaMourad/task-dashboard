@@ -21,7 +21,7 @@ import {
 } from 'chart.js';
 import { DistributionSlice } from '../../core/models/task-distribution';
 
-// Modular registration (not `chart.js/auto`) — only what a bar and a
+// Modular registration (not `chart.js/auto`): only what a bar and a
 // doughnut chart with tooltips/legend actually need, kept minimal on purpose.
 Chart.register(
   BarController,
@@ -40,7 +40,7 @@ interface ChartDataset {
   backgroundColor: string[];
 }
 
-/** Pure — no DOM/canvas involved, so it's directly unit-testable. */
+/** Pure, no DOM/canvas involved, so it's directly unit-testable. */
 export function mapToChartDataset(
   slices: readonly DistributionSlice<string>[],
   colorForKey: (key: string) => string,
@@ -55,11 +55,11 @@ export function mapToChartDataset(
 /**
  * Dumb: the only place in the app that touches Chart.js. Renders one
  * bar/doughnut chart from a `DistributionSlice[]`, plus an always-present
- * accessible text breakdown of the same data — a `<canvas>` has no inherent
+ * accessible text breakdown of the same data. A `<canvas>` has no inherent
  * accessible content, so the breakdown (not the `aria-label` alone) is the
  * real fallback. `compact` `sr-only`-hides the text breakdown and shrinks
  * the doughnut's built-in legend (Dashboard's only visible color key for
- * Status, since its breakdown is `sr-only` there) — no collapse/expand
+ * Status, since its breakdown is `sr-only` there); no collapse/expand
  * interaction, no separate implementation per caller.
  *
  * Colors are read from the app's existing CSS custom properties
@@ -67,7 +67,7 @@ export function mapToChartDataset(
  * `getComputedStyle`, not duplicated as a second hex table.
  *
  * The height a caller passes (`chartHeightClass`) is scoped to the canvas
- * wrapper only, never to the host — the host sizes naturally to canvas +
+ * wrapper only, never to the host. The host sizes naturally to canvas +
  * breakdown, so the visible breakdown (non-compact mode) is never clipped
  * or pushed outside a fixed-height ancestor.
  */
@@ -83,9 +83,9 @@ export class TaskDistributionChart implements OnDestroy {
   readonly ariaLabel = input.required<string>();
   /** Maps each slice's `key` to the CSS custom property name holding its color (e.g. `{ high: '--color-priority-high' }`). */
   readonly colorVars = input.required<Record<string, string>>();
-  /** `sr-only`-hides the text breakdown and shrinks the doughnut's built-in legend — Dashboard's compact presentation. */
+  /** `sr-only`-hides the text breakdown and shrinks the doughnut's built-in legend: Dashboard's compact presentation. */
   readonly compact = input(false);
-  /** Tailwind height utility applied to the canvas wrapper only (e.g. `h-32` compact, `h-64` full) — see class doc above. */
+  /** Tailwind height utility applied to the canvas wrapper only (e.g. `h-32` compact, `h-64` full); see class doc above. */
   readonly chartHeightClass = input('h-64');
 
   private readonly canvasRef = viewChild<ElementRef<HTMLCanvasElement>>('canvas');
@@ -97,7 +97,7 @@ export class TaskDistributionChart implements OnDestroy {
   constructor() {
     // Chart.js reads the canvas's container box (and, via the legend plugin,
     // measures text) at construction time, so it must run once Angular has
-    // actually committed a stable layout — not merely once the canvas exists
+    // actually committed a stable layout, not merely once the canvas exists
     // in the DOM. A plain `effect()` can fire mid-render, before the browser
     // has a final box to measure, leaving Chart.js's initial legend layout
     // wrong until something (e.g. a later interaction-triggered internal
@@ -153,7 +153,7 @@ export class TaskDistributionChart implements OnDestroy {
 
   /**
    * Chart.js's default bar legend shows one entry per *dataset*, not per
-   * category — and this chart never sets a dataset `label`, so that entry
+   * category, and this chart never sets a dataset `label`, so that entry
    * would render as the literal text "undefined". The categories are already
    * conveyed by the chart title and the accessible breakdown list, so a bar
    * chart never shows a legend (inventing a dataset label just to populate
@@ -161,7 +161,7 @@ export class TaskDistributionChart implements OnDestroy {
    *
    * Doughnut's default legend is per-slice and is Dashboard's only visible
    * color key for Status (its text breakdown is `sr-only` there), so it
-   * always shows — `compact` only shrinks its markers/font to fit the
+   * always shows; `compact` only shrinks its markers/font to fit the
    * smaller card, it never hides it.
    */
   private legendOptions(type: 'bar' | 'doughnut'): {

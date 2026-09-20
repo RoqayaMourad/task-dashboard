@@ -10,7 +10,7 @@ import { TaskDistributionChart } from '../../shared/task-distribution-chart/task
 
 /**
  * Smart/container. The fuller presentation of the same shared
- * priority/status distribution charts `DashboardPage` shows compactly —
+ * priority/status distribution charts `DashboardPage` shows compactly:
  * same derivation, same chart component, not a second implementation.
  * Sources exclusively from `TaskStore.tasks()`, never `/api/statistics`.
  */

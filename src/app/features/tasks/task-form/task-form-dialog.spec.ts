@@ -155,7 +155,7 @@ describe('TaskFormDialog', () => {
     open({ mode: 'edit', task: fixtureTask({ tags: ['Backend', ''] }) });
     expect(submitButton().disabled).toBe(true);
 
-    // Nothing marks the tags array touched on load — surface the message the
+    // Nothing marks the tags array touched on load; surface the message the
     // same way a real submit attempt would (native submit, e.g. Enter key).
     field<HTMLFormElement>('form').dispatchEvent(new Event('submit', { cancelable: true }));
     fixture.detectChanges();
@@ -196,7 +196,7 @@ describe('TaskFormDialog', () => {
     addButton.click();
     fixture.detectChanges();
 
-    // Save is disabled at this point, so it never fires — the message must
+    // Save is disabled at this point, so it never fires; the message must
     // not depend on onSubmit()'s markAllAsTouched() ever running.
     expect(submitButton().disabled).toBe(true);
 

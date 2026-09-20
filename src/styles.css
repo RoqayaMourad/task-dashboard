@@ -11,7 +11,7 @@
  * future rebrand of one doesn't silently affect the other.
  *
  * Values below are corrected against the inspected Figma source of truth
- * (Design Fidelity Correction phase) — exact hex, not Tailwind-palette
+ * (Design Fidelity Correction phase), exact hex, not Tailwind-palette
  * approximations. `--color-status-todo`/`--color-status-in-progress` are left
  * on their original Tailwind approximation: the Figma inspection only sampled
  * one task-card hover variant (overdue/red) in detail, so those two hues
@@ -22,19 +22,19 @@
   --color-primary: #1976d2;
   --color-primary-hover: #1565c0;
 
-  /* Board status — column accents + card hover ring */
+  /* Board status: column accents + card hover ring */
   --color-status-todo: var(--color-blue-500);
   --color-status-in-progress: var(--color-amber-500);
   --color-status-done: #388e3c;
 
-  /* Task priority — badges, filters */
+  /* Task priority: badges, filters */
   --color-priority-high: #d32f2f;
   --color-priority-medium: #f57c00;
   --color-priority-low: #388e3c;
 
   /*
    * Priority chip backgrounds (Phase 13, TaskCard). Figma's sampled fill for
-   * the Low chip is the same pink as High's, not a green tint — reproduced
+   * the Low chip is the same pink as High's, not a green tint, reproduced
    * verbatim rather than "corrected" to match its text color.
    */
   --color-priority-high-bg: #ffebee;
@@ -43,7 +43,7 @@
 
   /*
    * Accessible-text variants (Phase 18). The Figma-matched hues above are
-   * kept as-is everywhere else (chart fills, breakdown-list dots) — these
+   * kept as-is everywhere else (chart fills, breakdown-list dots); these
    * exist only because the small bold badge/trend TEXT set in those hues
    * fails WCAG AA against their own light chip backgrounds (2.49:1-4.36:1
    * measured). Same hue family, darkened until each passes 4.5:1+ against
@@ -53,14 +53,14 @@
   --color-priority-medium-text: #995000; /* vs --color-priority-medium-bg: 5.47:1 */
   --color-priority-low-text: #1b5e20; /* vs --color-priority-low-bg: 6.88:1 */
 
-  /* Due-date state — independent of priority/status, overrides hover ring */
+  /* Due-date state: independent of priority/status, overrides hover ring */
   --color-overdue: #d32f2f;
   --color-overdue-bg: #ffebee;
 
   /*
    * Dashboard stat-card trend direction (Statistic.changeType). Currently
    * shares hex values with status/priority/overdue tokens above, but kept
-   * semantically separate on purpose (Phase 12) — "positive change" is not
+   * semantically separate on purpose (Phase 12): "positive change" is not
    * the same concept as "done" or "low priority", and a future rebrand of
    * one should not silently move the other.
    */
@@ -73,10 +73,10 @@
 
   /*
    * Neutral text/border roles. Figma's neutral scale is true grey, not
-   * Tailwind's blue-tinted `slate` — these are additive tokens for future
+   * Tailwind's blue-tinted `slate`; these are additive tokens for future
    * (Phase 12+) components to opt into; existing `slate-*` usage in the
    * already-built shell/placeholder pages is intentionally left alone here
-   * (see Design Fidelity Correction phase notes — not an unrelated rewrite).
+   * (see Design Fidelity Correction phase notes; not an unrelated rewrite).
    */
   --color-text-heading: #212121;
   --color-text-muted: #757575;
@@ -96,7 +96,7 @@
     @apply ring-2 ring-primary ring-offset-2 outline-none;
   }
 
-  /* Colors only (never `transition: all`) — layout/visibility changes stay immediate. */
+  /* Colors only (never `transition: all`); layout/visibility changes stay immediate. */
   a,
   button {
     @apply transition-colors duration-150;

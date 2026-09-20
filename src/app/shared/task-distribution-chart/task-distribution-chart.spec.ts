@@ -3,7 +3,7 @@ import { DistributionSlice } from '../../core/models/task-distribution';
 import { mapToChartDataset, TaskDistributionChart } from './task-distribution-chart';
 
 // jsdom has no real canvas 2D context, so Chart.js itself can't be
-// meaningfully exercised in unit tests — this mocks the library boundary
+// meaningfully exercised in unit tests. This mocks the library boundary
 // and tests our own integration (what we construct it with, that we
 // destroy it) rather than any canvas rendering, per the "don't test
 // canvas internals" constraint.
@@ -13,11 +13,11 @@ import { mapToChartDataset, TaskDistributionChart } from './task-distribution-ch
 // reference to the mocked `Chart` import. On this project's CI runner
 // (Linux/Node 22, not reproducible on Windows), the component's `chart.js`
 // import and this spec's own `chart.js` import resolved to two distinct
-// evaluations of the `vi.mock` factory — confirmed by direct logging: the
+// evaluations of the `vi.mock` factory, confirmed by direct logging: the
 // component reliably constructed a "MockChart" instance on every render,
 // while a spec-side `vi.mocked(Chart).mock.instances` (or an even earlier
 // closure variable set from inside the factory) stayed empty/undefined.
-// Reading the instance the component itself holds sidesteps that entirely —
+// Reading the instance the component itself holds sidesteps that entirely;
 // it doesn't depend on which module evaluation produced it.
 interface MockChartInstance {
   canvas: unknown;
@@ -92,8 +92,8 @@ describe('TaskDistributionChart', () => {
 
   // `TaskDistributionChart` constructs its Chart.js instance inside
   // `afterRenderEffect`. That hook is registered by `detectChanges()` but
-  // actually runs via `AfterRenderManager`, invoked from `ApplicationRef.tick()`
-  // — not from a component-level `detectChanges()` call, and deliberately
+  // actually runs via `AfterRenderManager`, invoked from `ApplicationRef.tick()`,
+  // not from a component-level `detectChanges()` call, and deliberately
   // outside the Angular zone (so `whenStable()` doesn't wait for it either).
   // `TestBed.tick()` (`flushEffects()`) drives that `ApplicationRef.tick()`
   // directly, which is the documented way to flush a pending render effect.
@@ -157,7 +157,7 @@ describe('TaskDistributionChart', () => {
         .plugins.legend;
     }
 
-    it('never shows a legend for the bar chart (Priority) — Chart.js would otherwise render a stray "undefined" dataset-label entry, since this chart never sets one', () => {
+    it('never shows a legend for the bar chart (Priority): Chart.js would otherwise render a stray "undefined" dataset-label entry, since this chart never sets one', () => {
       const fixture = createComponent({ type: 'bar', compact: false });
       expect(legendConfig(fixture).display).toBe(false);
     });
@@ -173,7 +173,7 @@ describe('TaskDistributionChart', () => {
       expect(legendConfig(fixture).labels).toBeUndefined();
     });
 
-    it('keeps the doughnut legend visible when compact, shrunk to fit — Dashboard has no other visible color key since its breakdown is sr-only', () => {
+    it('keeps the doughnut legend visible when compact, shrunk to fit: Dashboard has no other visible color key since its breakdown is sr-only', () => {
       const fixture = createComponent({ type: 'doughnut', compact: true });
       expect(legendConfig(fixture).display).toBe(true);
       expect(legendConfig(fixture).labels).toEqual({ boxWidth: 8, padding: 6, font: { size: 10 } });
@@ -210,7 +210,7 @@ describe('TaskDistributionChart', () => {
 
   it(
     'recreates the chart, destroying the previous instance, when a reactive input changes ' +
-      'after the initial render — guards the effect()→afterRenderEffect migration: chart ' +
+      'after the initial render, guarding the effect()→afterRenderEffect migration: chart ' +
       'creation must stay tied to every render in which its signal inputs are dirty, not just ' +
       'the very first one',
     () => {

@@ -4,7 +4,7 @@ import { Injectable } from '@angular/core';
 /**
  * Shared in-memory GET-response cache, keyed by full request URL. Directly
  * injected by both `cacheInterceptor` (read/write) and `TaskStore`
- * (invalidation) — no event bus, since there's exactly one producer of
+ * (invalidation); no event bus, since there's exactly one producer of
  * invalidation and one consumer of the cache.
  */
 @Injectable({ providedIn: 'root' })

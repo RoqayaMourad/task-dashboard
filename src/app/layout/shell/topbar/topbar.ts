@@ -12,7 +12,7 @@ import { RouterLink } from '@angular/router';
 /**
  * Persistent top bar: brand, mobile nav toggle, search, notification/avatar chrome.
  * Notifications and the avatar have no backing feature yet, so they stay static,
- * non-interactive visuals. Search is a real input, but it's dumb — it owns only
+ * non-interactive visuals. Search is a real input, but it's dumb: it owns only
  * its own ephemeral displayed value; Shell decides when it's enabled and where
  * changes go (see `layout/shell/route-searchable.ts`).
  */

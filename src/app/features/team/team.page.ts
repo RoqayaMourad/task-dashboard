@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { UserService } from '../../core/services/user.service';
 
 /**
- * Smart: read-only user grid backed directly by `UserService` — the same
+ * Smart: read-only user grid backed directly by `UserService`, the same
  * singleton `TaskBoardPage`'s assignee filter and `TaskFormDialog`'s
  * assignee select already consume, not a second source of user state.
  */

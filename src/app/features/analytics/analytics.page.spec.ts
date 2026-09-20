@@ -4,7 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Task } from '../../core/models/task.model';
 import { AnalyticsPage } from './analytics.page';
 
-// jsdom has no real canvas 2D context — mock the Chart.js boundary. See
+// jsdom has no real canvas 2D context. Mock the Chart.js boundary. See
 // shared/task-distribution-chart/task-distribution-chart.spec.ts for the
 // chart component's own dedicated tests.
 vi.mock('chart.js', () => {

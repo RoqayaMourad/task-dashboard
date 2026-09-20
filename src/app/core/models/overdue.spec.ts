@@ -33,7 +33,7 @@ describe('isTaskOverdue', () => {
     expect(isTaskOverdue(fixture({ dueDate: '2026-09-18' }), justAfterMidnight)).toBe(false);
   });
 
-  it('never trusts a raw isOverdue-like flag — only status and dueDate are consulted', () => {
+  it('never trusts a raw isOverdue-like flag; only status and dueDate are consulted', () => {
     const task = { ...fixture({ dueDate: '2026-09-19' }), isOverdue: true } as Pick<
       Task,
       'status' | 'dueDate'

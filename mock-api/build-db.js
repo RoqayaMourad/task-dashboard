@@ -69,7 +69,7 @@ function main() {
   fs.writeFileSync(outPath, JSON.stringify(db, null, 2) + '\n', 'utf8');
 
   console.log(
-    `\n✅ Composed ${outPath} — ${tasks.length} tasks, ${statistics.length} statistics, ${users.length} users.`,
+    `\n✅ Composed ${outPath}: ${tasks.length} tasks, ${statistics.length} statistics, ${users.length} users.`,
   );
 }
 

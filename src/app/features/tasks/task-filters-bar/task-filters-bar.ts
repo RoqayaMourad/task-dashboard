@@ -22,7 +22,7 @@ const STATUS_OPTIONS: StatusOption[] = [
 ];
 
 /**
- * Dumb: no filter state of its own — every value is an input, every change
+ * Dumb: no filter state of its own; every value is an input, every change
  * an output. `TaskBoardPage` wires these straight to `TaskStore`'s existing
  * filter signals.
  */
@@ -48,7 +48,7 @@ export class TaskFiltersBar {
 
   private readonly newTaskButton = viewChild<ElementRef<HTMLButtonElement>>('newTaskButton');
 
-  /** Returns focus to the New Task trigger — called by TaskBoardPage after the create/edit dialog closes. */
+  /** Returns focus to the New Task trigger; called by TaskBoardPage after the create/edit dialog closes. */
   focusNewTaskButton(): void {
     this.newTaskButton()?.nativeElement.focus();
   }

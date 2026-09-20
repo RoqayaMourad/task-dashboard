@@ -14,7 +14,7 @@ import { HttpCache } from '../http/http-cache';
 
 const TASKS_URL = '/api/tasks';
 
-/** What json-server may literally send back — `completedAt` as `null`, not absent, once cleared via PATCH. */
+/** What json-server may literally send back: `completedAt` as `null`, not absent, once cleared via PATCH. */
 type TaskWire = Omit<Task, 'completedAt'> & { completedAt?: string | null };
 
 function normalize(raw: TaskWire): Task {
@@ -23,7 +23,7 @@ function normalize(raw: TaskWire): Task {
 
 /**
  * Single source of truth for tasks. The `GET /api/tasks` httpResource IS the
- * authoritative in-memory collection — mutations reconcile their server
+ * authoritative in-memory collection; mutations reconcile their server
  * response directly into it via the resource's own writable API
  * (`update`/`set`), never a parallel signal.
  *
@@ -66,10 +66,10 @@ export class TaskStore {
   readonly tasksByStatus = computed(() => groupTasksByStatus(this.filteredTasks()));
 
   readonly mutationPending = signal(false);
-  /** Preserves the real HttpErrorResponse (status, server body) — never normalized away. */
+  /** Preserves the real HttpErrorResponse (status, server body), never normalized away. */
   readonly mutationError = signal<HttpErrorResponse | Error | undefined>(undefined);
 
-  /** Manual retry for the GET /api/tasks read — httpResource has no built-in retry/backoff. */
+  /** Manual retry for the GET /api/tasks read; httpResource has no built-in retry/backoff. */
   reload(): boolean {
     return this.taskResource.reload();
   }

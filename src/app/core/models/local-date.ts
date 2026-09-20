@@ -3,7 +3,7 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
 /**
  * Parses a date-only `YYYY-MM-DD` string as local midnight, not UTC midnight.
  * `new Date('2026-09-20')` would parse as UTC and can silently shift to the
- * previous local calendar day west of UTC — this avoids that.
+ * previous local calendar day west of UTC; this avoids that.
  */
 export function parseDateOnly(dateOnly: string): Date {
   const [year, month, day] = dateOnly.split('-').map(Number);

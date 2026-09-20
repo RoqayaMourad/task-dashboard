@@ -15,7 +15,7 @@ import { Topbar } from './topbar/topbar';
  * Root layout: persistent topbar + sidebar around the routed page content.
  * Owns the mobile off-canvas sidebar's open/closed state and, via the
  * router outlet's activate/deactivate events, a reference to whichever
- * routed page currently implements `RouteSearchable` — never the search
+ * routed page currently implements `RouteSearchable`, never the search
  * term itself, and never a feature store.
  */
 @Component({

@@ -4,7 +4,7 @@ import { of, tap } from 'rxjs';
 import { HttpCache } from './http-cache';
 
 /**
- * The only GET endpoints this interceptor caches. Deliberately explicit —
+ * The only GET endpoints this interceptor caches. Deliberately explicit:
  * a future endpoint is NOT cached automatically just by being a GET; it has
  * to be added here on purpose.
  */

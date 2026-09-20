@@ -2,7 +2,7 @@ import { parseDateOnly, startOfLocalDay } from './local-date';
 import { Task } from './task.model';
 
 /**
- * The single source of truth for "is this task overdue" — the API's own
+ * The single source of truth for "is this task overdue": the API's own
  * `isOverdue` field (when present) is unreliable fixture metadata and is
  * never consulted here.
  */

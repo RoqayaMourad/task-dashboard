@@ -305,7 +305,7 @@ describe('TaskBoardPage', () => {
     expect(req.request.method).toBe('POST');
     expect(req.request.body.title).toBe('Ship the feature');
     // The form has no notion of completedAt at all (CreateTaskInput has no
-    // such field) — TaskStore.create() is what stamped this, via
+    // such field); TaskStore.create() is what stamped this, via
     // resolveCompletedAt(undefined, 'done', undefined, now).
     expect(typeof req.request.body.completedAt).toBe('string');
 
@@ -328,7 +328,7 @@ describe('TaskBoardPage', () => {
 
     buttonByText('+ New Task').click();
     fixture.detectChanges();
-    fillValidTaskForm(); // due 2026-10-01 — earlier than the existing 'later' task
+    fillValidTaskForm(); // due 2026-10-01, earlier than the existing 'later' task
     submitForm();
 
     const req = httpMock.expectOne('/api/tasks');
@@ -342,14 +342,14 @@ describe('TaskBoardPage', () => {
     expect(todoCards.map((h) => h.textContent?.trim())).toEqual(['Ship the feature', 'Later task']);
   });
 
-  it('places a newly created task by its dueDate, below an existing earlier-due task — never forced to the top', async () => {
+  it('places a newly created task by its dueDate, below an existing earlier-due task, never forced to the top', async () => {
     await boardReady([
       fixtureTask({ id: 'earlier', title: 'Earlier task', status: 'todo', dueDate: '2026-01-01' }),
     ]);
 
     buttonByText('+ New Task').click();
     fixture.detectChanges();
-    fillValidTaskForm(); // due 2026-10-01 — later than the existing 'earlier' task
+    fillValidTaskForm(); // due 2026-10-01, later than the existing 'earlier' task
     submitForm();
 
     const req = httpMock.expectOne('/api/tasks');
@@ -439,7 +439,7 @@ describe('TaskBoardPage', () => {
 
     // Bypasses the disabled kebab/menu UI to exercise the component's own
     // state guard directly, in case either handler is ever reachable by a
-    // route other than the (already-disabled) menu — e.g. a future
+    // route other than the (already-disabled) menu, e.g. a future
     // keyboard shortcut.
     const board = fixture.componentInstance as unknown as {
       openEditForm(event: { task: Task; trigger: HTMLElement }): void;
@@ -487,7 +487,7 @@ describe('TaskBoardPage', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelectorAll('app-task-card').length).toBe(0);
-    // The deleted card's kebab button no longer exists — focus falls back to New Task.
+    // The deleted card's kebab button no longer exists, so focus falls back to New Task.
     expect(trigger.isConnected).toBe(false);
     expect(document.activeElement).toBe(buttonByText('+ New Task'));
   });
@@ -719,7 +719,7 @@ describe('TaskBoardPage', () => {
     await router.navigateByUrl('/tasks?new');
 
     // Fresh instance mirroring a real route activation after that
-    // navigation — the shared `fixture` from beforeEach predates it.
+    // navigation; the shared `fixture` from beforeEach predates it.
     fixture = TestBed.createComponent(TaskBoardPage);
     await boardReady([]);
 
@@ -734,7 +734,7 @@ describe('TaskBoardPage', () => {
     await boardReady([]);
     expect(dialogHeading()).toBe('New Task');
 
-    // First intent already consumed — dismiss it, same as a normal Cancel.
+    // First intent already consumed; dismiss it, same as a normal Cancel.
     buttonByText('Cancel').click();
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('#task-title')).toBeNull();

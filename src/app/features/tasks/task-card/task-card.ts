@@ -17,7 +17,7 @@ import { dueDateLabel } from '../due-date-label';
 
 /**
  * `-text` variants (not the plain `--color-priority-*` used for chart fills
- * and breakdown-list dots) — see styles.css: the raw hues fail WCAG AA as
+ * and breakdown-list dots); see styles.css: the raw hues fail WCAG AA as
  * small badge text against their own chip backgrounds.
  */
 const PRIORITY_CLASS: Record<TaskPriority, string> = {
@@ -28,13 +28,13 @@ const PRIORITY_CLASS: Record<TaskPriority, string> = {
 
 export interface TaskActionEvent {
   task: Task;
-  /** The card's own kebab button — never the popup menu item — so callers can restore focus to it. */
+  /** The card's own kebab button, never the popup menu item, so callers can restore focus to it. */
   trigger: HTMLElement;
 }
 
 /**
  * Dumb: renders a resolved `Task` and its kebab Edit/Delete affordance.
- * Emits intent only — `TaskBoardPage` decides what Edit/Delete actually do.
+ * Emits intent only; `TaskBoardPage` decides what Edit/Delete actually do.
  */
 @Component({
   selector: 'app-task-card',

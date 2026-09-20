@@ -62,7 +62,7 @@ export class TaskBoardPage implements RouteSearchable, OnDestroy {
    * no knowledge of `TaskFormDialog`/`TaskStore`. Read reactively (via
    * `toSignal`, not a one-time `route.snapshot` read) because a second CTA
    * click while this page is already mounted re-navigates to the same
-   * route with the same query param present again — a snapshot is read
+   * route with the same query param present again; a snapshot is read
    * once per component lifetime and would miss that.
    */
   private readonly queryParamMap = toSignal(this.route.queryParamMap, {
@@ -74,7 +74,7 @@ export class TaskBoardPage implements RouteSearchable, OnDestroy {
       if (!this.queryParamMap().has('new')) {
         return;
       }
-      // Never clobbers an already-open dialog (e.g. mid-Edit) — only opens
+      // Never clobbers an already-open dialog (e.g. mid-Edit); only opens
       // Create when nothing is open yet.
       if (!this.formOpen()) {
         this.openCreateForm();
@@ -119,7 +119,7 @@ export class TaskBoardPage implements RouteSearchable, OnDestroy {
   protected readonly assigneeOptionsStatus = this.userService.users.status;
   /**
    * `value()` throws while the resource is in its 'error' state (see Phase
-   * 12) — `TaskFiltersBar` already renders its own error UI from
+   * 12); `TaskFiltersBar` already renders its own error UI from
    * `assigneeOptionsStatus`, so this just needs to never throw, not carry
    * real data, when there isn't any.
    */
@@ -149,11 +149,11 @@ export class TaskBoardPage implements RouteSearchable, OnDestroy {
   protected readonly mutationError = this.taskStore.mutationError;
   /**
    * Delete and drag-drop status-change failures both have no open dialog to
-   * show them in (ConfirmDialog closes itself immediately on Accept, before
-   * the mutation resolves — see PrimeNG's ConfirmDialog.onAccept — and a
-   * drag gesture never opens one at all), so both surface as a board-level
+   * show them in. ConfirmDialog closes itself immediately on Accept, before
+   * the mutation resolves, per PrimeNG's ConfirmDialog.onAccept, and a
+   * drag gesture never opens one at all, so both surface as a board-level
    * banner instead. Suppressed while the form dialog is open so a
-   * create/edit failure — shown inline in the dialog itself — isn't
+   * create/edit failure, shown inline in the dialog itself, isn't
    * duplicated here.
    */
   protected readonly showMutationErrorBanner = computed(
@@ -163,7 +163,7 @@ export class TaskBoardPage implements RouteSearchable, OnDestroy {
     mutationErrorMessage(this.mutationError()),
   );
 
-  /** The element to refocus once the dialog/confirmation flow completes — the real trigger, never a menu item. */
+  /** The element to refocus once the dialog/confirmation flow completes: the real trigger, never a menu item. */
   private pendingFocusRestore: HTMLElement | null = null;
 
   protected openCreateForm(): void {
@@ -225,12 +225,12 @@ export class TaskBoardPage implements RouteSearchable, OnDestroy {
   private async performDelete(id: string): Promise<void> {
     try {
       await this.taskStore.remove(id);
-      // The deleted card (and its kebab button) no longer exist — fall back
+      // The deleted card (and its kebab button) no longer exist, so fall back
       // to the one trigger guaranteed to still be there.
       this.pendingFocusRestore = null;
       this.restoreFocusAfterMutation();
     } catch {
-      // The task wasn't removed, so its kebab button is still in the DOM —
+      // The task wasn't removed, so its kebab button is still in the DOM;
       // land back on it rather than the New Task fallback.
       this.restoreFocusAfterMutation();
     }
@@ -239,11 +239,11 @@ export class TaskBoardPage implements RouteSearchable, OnDestroy {
   /**
    * Cross-column drop = a status change, delegated entirely to
    * `TaskStore.update()` so `completedAt` transition semantics stay
-   * centralized — the same call `handleSave()` already makes for an edit.
+   * centralized, the same call `handleSave()` already makes for an edit.
    * A same-column drop (source and target status equal) is a deliberate
    * no-op: `Task` has no persisted order/position field, so nothing here
    * ever calls `moveItemInArray`/`transferArrayItem` or mutates a local
-   * copy — `cdkDropListSortingDisabled` (set on every `TaskColumn`) already
+   * copy; `cdkDropListSortingDisabled` (set on every `TaskColumn`) already
    * suppresses the misleading intra-column reorder preview during the drag
    * itself. Drag is a pointer/touch gesture, not a keyboard action, so
    * unlike Edit/Delete there is no `pendingFocusRestore` bookkeeping here.
@@ -262,7 +262,7 @@ export class TaskBoardPage implements RouteSearchable, OnDestroy {
       await this.taskStore.update(task.id, { status });
     } catch {
       // taskStore.mutationError already holds the failure; showMutationErrorBanner
-      // renders it — a drag gesture has no dialog of its own to show it in.
+      // renders it; a drag gesture has no dialog of its own to show it in.
     }
   }
 
@@ -281,7 +281,7 @@ export class TaskBoardPage implements RouteSearchable, OnDestroy {
    * Same as `restoreFocus()`, but for use right after an awaited `TaskStore`
    * mutation resolves. The element we're restoring focus to may have just
    * been re-enabled by `mutationPending` flipping to `false` (the New
-   * Task/kebab `[disabled]` bindings) — that DOM update hasn't necessarily
+   * Task/kebab `[disabled]` bindings); that DOM update hasn't necessarily
    * been flushed yet at this exact point, and `.focus()` on a still-`disabled`
    * element is a no-op. Forcing a synchronous check first guarantees it has.
    */

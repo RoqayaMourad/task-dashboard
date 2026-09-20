@@ -4,7 +4,7 @@ export interface ActivityItem {
   taskId: string;
   taskTitle: string;
   kind: 'created' | 'updated';
-  /** ISO timestamp backing this item — formatting is left to the view. */
+  /** ISO timestamp backing this item; formatting is left to the view. */
   at: string;
 }
 
@@ -14,7 +14,7 @@ function parseTimestamp(value: string): number | undefined {
 }
 
 /**
- * One item per task, derived only from `createdAt`/`updatedAt` — there is no
+ * One item per task, derived only from `createdAt`/`updatedAt`; there is no
  * audit log, so this can never say *what* changed or attribute the change to
  * the assignee. A task is "updated" only when both timestamps parse and
  * `updatedAt` is strictly later than `createdAt`; otherwise it's "created"

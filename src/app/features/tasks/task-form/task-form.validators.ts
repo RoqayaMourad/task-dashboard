@@ -2,7 +2,7 @@ import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { ResourceStatus } from '@angular/core';
 import { Assignee } from '../../../core/models/task.model';
 
-/** `Validators.required` alone lets a whitespace-only title through — this closes that gap. */
+/** `Validators.required` alone lets a whitespace-only title through; this closes that gap. */
 export function nonWhitespaceTitle(control: AbstractControl<string>): ValidationErrors | null {
   const value = control.value;
   if (typeof value === 'string' && value.length > 0 && value.trim().length === 0) {
@@ -32,7 +32,7 @@ export function uniqueNonEmptyTags(control: AbstractControl): ValidationErrors |
 
 /**
  * Confirms the selected assignee id still exists in the live `UserService`
- * collection — `Validators.required` only proves the field isn't empty, not
+ * collection; `Validators.required` only proves the field isn't empty, not
  * that the id is still valid (e.g. a stale id from an edit-mode prefill).
  * Deliberately returns no error while `getStatus()` isn't `'resolved'`: with
  * an empty/incomplete options list we can't yet prove membership either way,

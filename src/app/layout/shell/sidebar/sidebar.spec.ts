@@ -73,7 +73,7 @@ describe('Sidebar', () => {
     const href = cta.getAttribute('href')!;
     const { pathname, searchParams } = new URL(href, 'http://localhost');
     expect(pathname).toBe('/tasks');
-    // Presence-checked by the consumer, never string/boolean-compared — see
+    // Presence-checked by the consumer, never string/boolean-compared; see
     // TaskBoardPage's queryParamMap handling.
     expect(searchParams.has('new')).toBe(true);
   });

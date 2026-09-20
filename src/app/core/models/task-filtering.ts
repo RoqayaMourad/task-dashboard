@@ -38,12 +38,12 @@ function idTiebreak(a: Task, b: Task): number {
 }
 
 /**
- * Earliest/overdue due date first — observable in the supplied Figma
+ * Earliest/overdue due date first, observable in the supplied Figma
  * reference (To Do/In Progress cards run overdue → soonest → latest due
  * date), not an explicit textual assignment requirement. `dueDate` is
  * date-only (`YYYY-MM-DD`), parsed via `parseDateOnly` for the same local-
  * midnight semantics `isTaskOverdue`/`dueDateLabel` already use for this
- * field — never the fixture's own unreliable `isOverdue`. An unparseable
+ * field, never the fixture's own unreliable `isOverdue`. An unparseable
  * `dueDate` (defensive only) sorts after every valid one.
  */
 function compareByDueDateAscending(a: Task, b: Task): number {
@@ -62,12 +62,12 @@ function compareByDueDateAscending(a: Task, b: Task): number {
 }
 
 /**
- * Most recently completed first — also observable in the Figma reference
+ * Most recently completed first, also observable in the Figma reference
  * (Done cards run newest → oldest completion). Done's meaningful axis is
  * completion recency, not due-date urgency: a finished task's original due
  * date no longer matters once it's done, so this deliberately does not
  * reuse `compareByDueDateAscending`. A missing or unparseable `completedAt`
- * (defensive only — `resolveCompletedAt` always stamps a real one on
+ * (defensive only; `resolveCompletedAt` always stamps a real one on
  * entering `done`) sorts after every valid one.
  */
 function compareByCompletedAtDescending(a: Task, b: Task): number {

@@ -38,7 +38,7 @@ describe('TaskCard', () => {
     fixture.detectChanges();
   }
 
-  /** Clicks a popup menu item by its label — the actual click handler lives on the item's inner content element, not the `role="menuitem"` <li> itself. */
+  /** Clicks a popup menu item by its label; the actual click handler lives on the item's inner content element, not the `role="menuitem"` <li> itself. */
   function clickMenuItem(fixture: ReturnType<typeof createComponent>, text: string): void {
     const items: HTMLElement[] = Array.from(
       fixture.nativeElement.querySelectorAll('[role="menuitem"]'),
@@ -146,7 +146,7 @@ describe('TaskCard', () => {
     // intermediate `position: relative/absolute/fixed` ancestor between the
     // trigger and the document root. Such an ancestor becomes the popup's
     // offsetParent instead, making it render far from the trigger (a real
-    // bug caught in manual QA — the culprit was a `class="relative"` on the
+    // bug caught in manual QA: the culprit was a `class="relative"` on the
     // kebab's own wrapper).
     const fixture = createComponent(fixtureTask());
     let node: HTMLElement | null = kebabButton(fixture).parentElement;

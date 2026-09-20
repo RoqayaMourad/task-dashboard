@@ -12,8 +12,6 @@ describe('CalendarPage', () => {
   it('renders its placeholder heading and explanatory text', () => {
     const heading: HTMLHeadingElement = fixture.nativeElement.querySelector('h1');
     expect(heading.textContent?.trim()).toBe('Calendar');
-    expect(fixture.nativeElement.textContent).toContain(
-      'No functionality is specified for this page in the assignment',
-    );
+    expect(fixture.nativeElement.textContent).toContain('Coming soon.');
   });
 });

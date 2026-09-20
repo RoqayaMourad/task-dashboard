@@ -2,7 +2,7 @@ import { Route } from '@angular/router';
 import { routes } from './app.routes';
 
 /**
- * Structural assertions only — never invokes `loadComponent()`, so this
+ * Structural assertions only, never invokes `loadComponent()`, so this
  * never triggers the dynamic `import()`s themselves (which would just
  * duplicate what each lazy page's own spec already builds/tests).
  */
@@ -33,7 +33,7 @@ describe('routes', () => {
     const wildcard = routes.find((route) => route.path === '**');
     expect(wildcard).toBeTruthy();
     expect(typeof wildcard?.loadComponent).toBe('function');
-    // Deliberately a sibling of the shell route, not one of its children —
+    // Deliberately a sibling of the shell route, not one of its children:
     // it must also catch a completely unknown top-level path.
     expect(routes.includes(wildcard!)).toBe(true);
     const shellRoute = routes.find((route) => route.path === '');

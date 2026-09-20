@@ -18,9 +18,9 @@ const RECENT_ACTIVITY_LIMIT = 5;
  * Smart/container. Statistics is one independent `httpResource`
  * (`StatisticsService`); Recent Activity and the distribution charts are
  * two presentations of the *same* `TaskStore` resource, not independent
- * ones — they share one loading/error/retry state (`taskDataStatus`/
+ * ones; they share one loading/error/retry state (`taskDataStatus`/
  * `retryTaskData`) since retrying one re-fetches what both need. Neither
- * resource is ever collapsed into a single page-wide state — each of the
+ * resource is ever collapsed into a single page-wide state: each of the
  * two groups renders, fails, and retries on its own.
  */
 @Component({

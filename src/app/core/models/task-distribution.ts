@@ -4,7 +4,7 @@ export interface DistributionSlice<K extends string> {
   key: K;
   label: string;
   count: number;
-  /** Rounded to the nearest integer per slice — may not sum to exactly 100. */
+  /** Rounded to the nearest integer per slice; may not sum to exactly 100. */
   percentage: number;
 }
 
@@ -37,17 +37,17 @@ function distribution<K extends string>(
   });
 }
 
-/** Task counts by priority, high → medium → low — the assignment's "priority distribution" chart. */
+/** Task counts by priority, high → medium → low: the assignment's "priority distribution" chart. */
 export function priorityDistribution(tasks: readonly Task[]): DistributionSlice<TaskPriority>[] {
   return distribution(tasks, PRIORITY_ORDER, (task) => task.priority);
 }
 
-/** Task counts by status, todo → in_progress → done — the assignment's "status distribution" chart. */
+/** Task counts by status, todo → in_progress → done: the assignment's "status distribution" chart. */
 export function statusDistribution(tasks: readonly Task[]): DistributionSlice<TaskStatus>[] {
   return distribution(tasks, STATUS_ORDER, (task) => task.status);
 }
 
-/** CSS custom property (styles.css `@theme`) holding each priority's chart color — single source of truth, no duplicated hex. */
+/** CSS custom property (styles.css `@theme`) holding each priority's chart color: single source of truth, no duplicated hex. */
 export const PRIORITY_COLOR_VARS: Record<TaskPriority, string> = {
   high: '--color-priority-high',
   medium: '--color-priority-medium',

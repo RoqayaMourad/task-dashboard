@@ -15,7 +15,7 @@ export interface Task {
   description: string;
   status: TaskStatus;
   priority: TaskPriority;
-  /** Date-only, `YYYY-MM-DD` — distinct format from the ISO datetime fields below. */
+  /** Date-only, `YYYY-MM-DD`; distinct format from the ISO datetime fields below. */
   dueDate: string;
   /** ISO datetime, present only when `status === 'done'`. */
   completedAt?: string;
@@ -28,7 +28,7 @@ export interface Task {
 /**
  * Fields a user actually provides when creating a task. Excludes `id`
  * (assigned by json-server), `createdAt`/`updatedAt`/`completedAt` (stamped
- * by TaskStore — json-server has no business logic of its own to do this).
+ * by TaskStore, since json-server has no business logic of its own to do this).
  */
 export interface CreateTaskInput {
   title: string;

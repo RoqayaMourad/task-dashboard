@@ -34,7 +34,7 @@ type TaskForm = FormGroup<{
 
 /**
  * Dumb: owns the reactive form only, no `TaskStore`/`UserService` injection.
- * One instance handles both Create and Edit — `TaskBoardPage` decides which
+ * One instance handles both Create and Edit; `TaskBoardPage` decides which
  * `TaskStore` method to call from the emitted `save` value. Stays mounted
  * for the page's lifetime; the form is (re)initialized from `task()`/`mode()`
  * each time `visible()` transitions to `true`, so a failed submit leaves
@@ -104,8 +104,8 @@ export class TaskFormDialog {
 
     // Keeps assigneeId's enabled/disabled state and validity in sync with the
     // live options resource. Angular disallows [disabled] alongside
-    // formControlName, so this is the control's own `disable()`/`enable()` —
-    // and note a *disabled* control is excluded from `form.invalid`
+    // formControlName, so this is the control's own `disable()`/`enable()`.
+    // Note a *disabled* control is excluded from `form.invalid`
     // entirely, which is why `canSubmit()` independently re-checks
     // `assigneeOptionsStatus() === 'resolved'` rather than trusting
     // `form.invalid` alone here.
@@ -135,7 +135,7 @@ export class TaskFormDialog {
     this.tagsArray.updateValueAndValidity();
     // A disabled Save button never fires (ngSubmit), so onSubmit()'s
     // markAllAsTouched() never runs while a duplicate/blank tag is exactly
-    // what's keeping it disabled — mark touched right on the action that
+    // what's keeping it disabled; mark touched right on the action that
     // could introduce the problem instead.
     this.tagsArray.markAsTouched();
     this.newTagValue.set('');
@@ -160,7 +160,7 @@ export class TaskFormDialog {
       return false;
     }
     // A stale/missing assignee is an existing-data problem, not something the
-    // user just typed — surface it immediately rather than waiting for touch.
+    // user just typed; surface it immediately rather than waiting for touch.
     if (control.errors?.['assigneeMissing']) {
       return true;
     }
@@ -173,7 +173,7 @@ export class TaskFormDialog {
       return null;
     }
     if (errors['assigneeMissing']) {
-      return 'This assignee is no longer available — choose another.';
+      return 'This assignee is no longer available. Choose another.';
     }
     return 'Select an assignee.';
   }

@@ -4,7 +4,7 @@ import { ActivityItem } from '../activity';
 
 /**
  * Dumb, resolved-state only: renders whatever `ActivityItem[]` it's given.
- * Has no idea `TaskStore`/`httpResource` exist — loading/error/retry are
+ * Has no idea `TaskStore`/`httpResource` exist; loading/error/retry are
  * `DashboardPage`'s job.
  */
 @Component({

@@ -5,7 +5,7 @@ import { Statistic } from '../../core/models/statistic.model';
 import { Task } from '../../core/models/task.model';
 import { DashboardPage } from './dashboard.page';
 
-// jsdom has no real canvas 2D context — mock the Chart.js boundary so the
+// jsdom has no real canvas 2D context. Mock the Chart.js boundary so the
 // distribution charts render without exercising canvas internals. See
 // shared/task-distribution-chart/task-distribution-chart.spec.ts for the
 // component's own dedicated tests.

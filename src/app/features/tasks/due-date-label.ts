@@ -4,7 +4,7 @@ import { Task } from '../../core/models/task.model';
 
 /**
  * The card's truthful due/overdue/completed line. Overdue status is decided
- * solely by `isTaskOverdue()` — this only adds human wording on top.
+ * solely by `isTaskOverdue()`; this only adds human wording on top.
  */
 export function dueDateLabel(task: Task, now = new Date()): string {
   if (task.status === 'done') {

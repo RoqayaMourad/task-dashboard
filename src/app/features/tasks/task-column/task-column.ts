@@ -6,7 +6,7 @@ import { TaskActionEvent, TaskCard } from '../task-card/task-card';
 /**
  * Dumb: one board column. Count badge reflects the live `tasks` input, never
  * a hardcoded figure. `cdkDropListData` carries this column's own
- * `TaskStatus` — never a string id — so `TaskBoardPage` decides what a drop
+ * `TaskStatus`, never a string id, so `TaskBoardPage` decides what a drop
  * means from typed CDK data, not by parsing a DOM identifier. This column
  * only relays the raw `CdkDragDrop` event upward; it has no `TaskStore`
  * access and makes no mutation decision itself.
